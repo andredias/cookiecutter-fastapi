@@ -1,0 +1,9 @@
+syntax: glob
+*.pyc
+*.orig
+*~
+*.egg-info
+.venv
+.mypy_cache
+.pytest_cache
+.vscode

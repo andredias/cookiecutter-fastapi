@@ -1,0 +1,8 @@
+{
+  "author": "",
+  "email": "",
+  "project_name": "Projeto",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "python_version": "3.9",
+  "version_control": ["hg", "git"]
+}
