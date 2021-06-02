@@ -10,7 +10,10 @@ from ..schemas.user import UserInfo, UserInsert, UserPatch
 router = APIRouter()
 
 
-async def selected_user(id: int, current_user: UserInfo) -> UserInfo:
+async def selected_user(
+    id: int,
+    current_user: UserInfo = Depends(authenticated_user),
+) -> UserInfo:
     if id != current_user.id and not current_user.is_admin:
         raise HTTPException(403)
     user = current_user if id == current_user.id else await get_user(id)
@@ -25,10 +28,8 @@ async def get_users(admin: UserInfo = Depends(admin_user)):
 
 
 @router.get('/users/{id}', response_model=UserInfo)
-async def get_user_info(
-    id: int, current_user: UserInfo = Depends(authenticated_user)
-):
-    return await selected_user(id, current_user)
+async def get_user_info(id: int, user: UserInfo = Depends(selected_user)):
+    return user
 
 
 @router.put('/users/{id}', status_code=204)
@@ -36,9 +37,8 @@ async def get_user_info(
 async def update_user(
     id: int,
     patch: UserPatch,
-    current_user: UserInfo = Depends(authenticated_user),
+    user: UserInfo = Depends(selected_user),
 ):
-    user = await selected_user(id, current_user)
     fields = diff_models(user, patch)
     try:
         await update(id, UserPatch(**fields))
@@ -48,10 +48,7 @@ async def update_user(
 
 
 @router.delete('/users/{id}', status_code=204)
-async def delete_user(
-    id: int, current_user: UserInfo = Depends(authenticated_user)
-):
-    await selected_user(id, current_user)
+async def delete_user(id: int, user: UserInfo = Depends(selected_user)):
     await delete(id)
 
 

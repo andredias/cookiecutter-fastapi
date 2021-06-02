@@ -68,7 +68,7 @@ async def test_update_user(users: ListDictStrAny, client: AsyncClient) -> None:
     name = 'Belafonte'
 
     logger.info('anonymous tries to update a user account')
-    resp = await client.put(url.format(user_id))
+    resp = await client.put(url.format(user_id), json={'email': email})
     assert resp.status_code == 401
 
     logger.info('normal user tries to update another account')
