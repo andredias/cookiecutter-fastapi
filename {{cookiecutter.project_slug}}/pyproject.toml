@@ -9,11 +9,15 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
+aioredis = {extras = ["hiredis"], version = "*", allow-prereleases = true}
 asyncpg = "*"
 databases = "*"
+email_validator = "*"
 fastapi = "*"
 Hypercorn = "*"
 loguru = "*"
+orjson = "*"
+passlib = {extras = ["argon2"], version = "*"}
 python = "^{{cookiecutter.python_version}}"
 uvloop = "*"
 tenacity = "*"

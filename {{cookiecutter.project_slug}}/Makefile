@@ -1,7 +1,9 @@
 POSTGRESQL_RUNNING = $(shell docker ps | grep postgres-development)
+REDIS_RUNNING = $(shell docker ps | grep redis-development)
 
-run: start_postgres
-	@ trap 'echo "Stopping postgres..."; docker stop postgres-development' INT; \
+
+run: start_postgres start_redis
+	@ trap 'echo "Stopping postgres..."; docker stop -t 0 postgres-development redis-development' INT; \
 	ENV=development hypercorn --reload --config=hypercorn.toml 'app.main:app'
 
 

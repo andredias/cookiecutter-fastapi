@@ -1,48 +1,65 @@
-from fastapi import APIRouter, HTTPException
-from loguru import logger
+from asyncpg.exceptions import IntegrityConstraintViolationError
+from fastapi import APIRouter, Depends, HTTPException
 
+from ..authentication import admin_user, authenticated_user
 from ..models.user import delete, get_all, get_user, insert, update
-from ..schemas.user import User, UserIn
+from ..resources import db
+from ..schemas import diff_models
+from ..schemas.user import UserInfo, UserInsert, UserPatch
 
 router = APIRouter()
 
 
-@router.get('/users', response_model=list[User])
-async def get_users():
-    result = await get_all()
-    logger.debug(result)
-    return result
-
-
-@router.get('/users/{cpf}', response_model=User)
-async def get_one_user(cpf: str):
-    user = await get_user(cpf)
+async def selected_user(id: int, current_user: UserInfo) -> UserInfo:
+    if id != current_user.id and not current_user.is_admin:
+        raise HTTPException(403)
+    user = current_user if id == current_user.id else await get_user(id)
     if not user:
         raise HTTPException(404)
     return user
 
 
+@router.get('/users', response_model=list[UserInfo])
+async def get_users(admin: UserInfo = Depends(admin_user)):
+    return await get_all()
+
+
+@router.get('/users/{id}', response_model=UserInfo)
+async def get_user_info(
+    id: int, current_user: UserInfo = Depends(authenticated_user)
+):
+    return await selected_user(id, current_user)
+
+
+@router.put('/users/{id}', status_code=204)
+@db.transaction()
+async def update_user(
+    id: int,
+    patch: UserPatch,
+    current_user: UserInfo = Depends(authenticated_user),
+):
+    user = await selected_user(id, current_user)
+    fields = diff_models(user, patch)
+    try:
+        await update(id, UserPatch(**fields))
+    except IntegrityConstraintViolationError:
+        raise HTTPException(422)
+    return
+
+
+@router.delete('/users/{id}', status_code=204)
+async def delete_user(
+    id: int, current_user: UserInfo = Depends(authenticated_user)
+):
+    await selected_user(id, current_user)
+    await delete(id)
+
+
 @router.post('/users', status_code=201)
-async def include_user(user: User):
-    logger.debug(user)
-    await insert(user)
-    return
-
-
-@router.put('/users', status_code=204)
-async def update_user(user: UserIn):
-    logger.debug(user)
-    old_user = await get_user(user.cpf)
-    if not old_user:
-        raise HTTPException(404)
-    await update(user)
-    return
-
-
-@router.delete('/users/{cpf}', status_code=204)
-async def delete_user(cpf: str):
-    user = await get_user(cpf)
-    if not user:
-        raise HTTPException(404)
-    await delete(cpf)
-    return
+@db.transaction()
+async def create_user(user: UserInsert):
+    try:
+        id = await insert(user)
+    except IntegrityConstraintViolationError:
+        raise HTTPException(422)
+    return {'id': id}
