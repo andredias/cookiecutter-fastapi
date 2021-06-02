@@ -1,5 +1,6 @@
 from asyncpg.exceptions import IntegrityConstraintViolationError
 from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
 
 from ..authentication import admin_user, authenticated_user
 from ..models.user import delete, get_all, get_user, insert, update
@@ -43,11 +44,13 @@ async def update_user(
     try:
         await update(id, UserPatch(**fields))
     except IntegrityConstraintViolationError:
+        logger.info(f'Integrity violation. {user} vs {patch}')
         raise HTTPException(422)
     return
 
 
 @router.delete('/users/{id}', status_code=204)
+@db.transaction()
 async def delete_user(id: int, user: UserInfo = Depends(selected_user)):
     await delete(id)
 
@@ -58,5 +61,6 @@ async def create_user(user: UserInsert):
     try:
         id = await insert(user)
     except IntegrityConstraintViolationError:
+        logger.info(f'Integrity violation. {user}')
         raise HTTPException(422)
     return {'id': id}
