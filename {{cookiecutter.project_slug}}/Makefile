@@ -38,3 +38,17 @@ start_postgres:
 			-e POSTGRES_PASSWORD=development_1234 --name postgres-development \
 			postgres:alpine; \
 	fi
+
+
+start_redis:
+	@ if [ -z "$(REDIS_RUNNING)" ]; then \
+		echo 'Starting Redis...'; \
+		docker run -d --rm -p 6379:6379  \
+			--name redis-development \
+			redis:alpine; \
+	fi
+
+
+
+build:
+	docker build -t {{cookiecutter.project_slug}} .

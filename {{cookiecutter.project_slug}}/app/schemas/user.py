@@ -21,4 +21,4 @@ class UserPatch(BaseModel):
     name: Optional[str]
     email: Optional[EmailStr]
     password: Optional[str]
-    admin: Optional[bool] = False
+    is_admin: Optional[bool] = False

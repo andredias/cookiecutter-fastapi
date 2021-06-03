@@ -32,7 +32,10 @@ COPY --from=builder /venv /venv
 ENV PATH=/venv/bin:/venv/rust/bin:${PATH}
 
 WORKDIR /{{cookiecutter.project_slug}}
-COPY hypercorn.toml .
-COPY app/ ./app
+USER nobody
+COPY --chown=nobody:nogroup hypercorn.toml .
+COPY --chown=nobody:nogroup app/ ./app
+
+EXPOSE 8000
 
 CMD ["hypercorn", "--config=hypercorn.toml", "app.main:app"]
