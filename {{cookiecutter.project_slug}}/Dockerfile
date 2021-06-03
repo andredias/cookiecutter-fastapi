@@ -1,5 +1,5 @@
 FROM python:{{cookiecutter.python_version}}-slim as builder
-LABEL maintainer="André Felipe Dias <andre.dias@pronus.io>"
+LABEL maintainer="{{cookiecutter.author}} <{{cookiecutter.email}}>"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
