@@ -7,7 +7,7 @@ from typing import Any, Optional
 import orjson as json
 
 from . import config
-from . import resources as res
+from .resources import redis
 
 
 async def create_session(data: dict[str, Any]) -> str:
@@ -15,28 +15,27 @@ async def create_session(data: dict[str, Any]) -> str:
     Creates a random session_id and stores the related data into Redis.
     """
     session_id: str = token_urlsafe(config.SESSION_ID_LENGTH)
-    await res.redis.set(session_id, json.dumps(data))
-    await res.redis.expire(session_id, config.SESSION_LIFETIME)
+    await redis.set(session_id, json.dumps(data), ex=config.SESSION_LIFETIME)
     return session_id
 
 
 async def get_session(session_id: str) -> Optional[dict[str, Any]]:
-    payload = await res.redis.get(session_id)
+    payload = await redis.get(session_id)
     data = None
     if payload is not None:
         data = json.loads(payload)
-        await res.redis.expire(
+        await redis.expire(
             session_id, config.SESSION_LIFETIME
         )  # renew expiration date
     return data
 
 
 async def delete_session(session_id: str) -> None:
-    await res.redis.delete(session_id)
+    await redis.delete(session_id)
 
 
 async def session_exists(session_id: str) -> bool:
-    return await res.redis.exists(session_id)
+    return await redis.exists(session_id)
 
 
 def create_csrf(session_id: str) -> str:

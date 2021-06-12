@@ -31,18 +31,16 @@ async def test_session(app) -> None:
     assert not await session_exists(session_id)
 
 
-@patch('app.resources.redis', new_callable=AsyncMock)
-async def test_create_csrf(redis: AsyncMock, app) -> None:
+async def test_create_csrf(app) -> None:
     session_id = await create_session({'user_id': 12345})
     csrf = create_csrf(session_id)
     assert is_valid_csrf(session_id, csrf)
 
 
-@patch('app.resources.redis', new_callable=AsyncMock)
-async def test_expired_session(redis: AsyncMock, app) -> None:
+@patch('app.sessions.redis', new_callable=AsyncMock)
+async def test_renew_session(redis: AsyncMock, app) -> None:
     data = {'user_id': 1}
     session_id = await create_session(data)
-    assert redis.expire.call_count == 1
     redis.get.return_value = '{"user_id": 1}'
     _ = await get_session(session_id)
-    assert redis.expire.call_count == 2
+    assert redis.expire.call_count == 1
