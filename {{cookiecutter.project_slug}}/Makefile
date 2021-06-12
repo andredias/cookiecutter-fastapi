@@ -15,7 +15,7 @@ lint:
 	@echo
 	flake8 .
 	@echo
-	mypy --ignore-missing-imports .
+	mypy --ignore-missing-imports --install-types .
 
 
 format_code:

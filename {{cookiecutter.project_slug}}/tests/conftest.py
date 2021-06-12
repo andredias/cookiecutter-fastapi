@@ -48,7 +48,11 @@ async def app(docker) -> AsyncIterable[FastAPI]:
 
 @fixture
 async def client(app: FastAPI) -> AsyncIterable[AsyncClient]:
-    async with AsyncClient(app=app, base_url='http://testserver') as client:
+    async with AsyncClient(
+        app=app,
+        base_url='http://testserver',
+        headers={'Content-Type': 'application/json'},
+    ) as client:
         yield client
 
 

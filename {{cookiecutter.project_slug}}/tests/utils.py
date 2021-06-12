@@ -10,6 +10,7 @@ async def logged_session(client: AsyncClient, user_id: int = None) -> None:
         session_id = await create_session(dict(id=user_id))
         csrf_token = create_csrf(session_id)
         cookies.set('session_id', session_id)
+        headers['content-type'] = 'application/json'
         headers['x-csrf-token'] = csrf_token
     client.cookies = cookies
     client.headers = headers
