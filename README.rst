@@ -17,7 +17,7 @@ Features
 * Development tasks registered in a ``Makefile`` for easy access and management
 * Mercurial/Git hooks for ``pre-commit`` and ``pre-push`` events
 * Linting based on flake8_ (and plugins), blue_, mypy_ and isort_
-* Asynchronous tests based on httpx_ and alt-pytest-asyncio_
+* Asynchronous tests based on pytest_, httpx_ and alt-pytest-asyncio_
 
 
 Instructions
@@ -64,4 +64,5 @@ I decided to create one of my own.
 .. _isort: https://pypi.org/project/isort/
 .. _mypy: http://mypy-lang.org/
 .. _Poetry: https://python-poetry.org/
+.. _pytest: https://pytest.org
 .. _templates and generators for FastAPI projects: https://github.com/mjhea0/awesome-fastapi#boilerplate
