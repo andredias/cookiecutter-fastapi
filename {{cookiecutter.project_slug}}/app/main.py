@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
+from . import config
 from .resources import shutdown, startup
 from .routers import login, user
 
@@ -9,7 +10,11 @@ routers = [
     user.router,
 ]
 
-app = FastAPI(default_response_class=ORJSONResponse)
+app = FastAPI(
+    title='{{cookiecutter.project_name}}',
+    debug=config.DEBUG,
+    default_response_class=ORJSONResponse,
+)
 for router in routers:
     app.include_router(router)
 
