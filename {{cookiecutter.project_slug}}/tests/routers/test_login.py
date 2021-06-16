@@ -15,13 +15,10 @@ async def test_successful_login(
         '/login', json={'email': email, 'password': password}
     )
     assert resp.status_code == 200
-    csrf, session_id = [
-        set(cookie.split('; '))
-        for cookie in sorted(resp.headers.get_list('set-cookie'))
-    ]
-    assert {'HttpOnly', 'Secure', 'SameSite=lax'} <= session_id
-    assert {'Secure', 'SameSite=lax'} <= csrf
-    assert 'HttpOnly' not in csrf
+    assert resp.headers.get('x-csrf-token')
+    assert len(resp.cookies) == 1 and 'session_id' in resp.cookies
+    session_id_props = set(resp.headers.get_list('set-cookie')[0].split('; '))
+    assert {'HttpOnly', 'Secure', 'SameSite=lax'} <= session_id_props
 
 
 @patch('app.routers.login.delete_session')
@@ -41,7 +38,7 @@ async def test_successful_login_with_session_id(
     )
     assert resp.status_code == 200
     assert resp.cookies['session_id'] != session_id
-    assert resp.cookies['csrf']
+    assert resp.headers.get('x-csrf-token')
     delete_session.assert_awaited_once_with(session_id)
 
 
@@ -53,6 +50,7 @@ async def test_unsuccessful_login(client: AsyncClient) -> None:
     )
     assert resp.status_code == 404
     assert not bool(resp.headers.get('set-cookie'))
+    assert resp.headers.get('x-csrf-token') is None
 
 
 @patch('app.routers.login.delete_session')
@@ -70,6 +68,5 @@ async def test_logout(
 
     assert resp.status_code == 204
     assert 'session_id=""' in cookies_headers
-    assert 'csrf=""' in cookies_headers
     assert 'Max-Age=0' in cookies_headers
     assert delete_session.called is called

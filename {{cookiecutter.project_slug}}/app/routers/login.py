@@ -17,17 +17,17 @@ class LoginInfo(BaseModel):
 async def login(
     rec: LoginInfo, response: Response, session_id: str = Cookie(None)
 ) -> UserInfo:
+    if session_id:
+        await delete_session(session_id)
     user = await get_user_by_login(rec.email, rec.password)
     if user is None:
         raise HTTPException(status_code=404, detail='invalid email or password')
-    if session_id:
-        await delete_session(session_id)
     session_id = await create_session({'user_id': user.id})
     csrf_token = create_csrf(session_id)
     response.set_cookie(
         key='session_id', value=session_id, httponly=True, secure=True
     )
-    response.set_cookie(key='csrf', value=csrf_token, secure=True)
+    response.headers['x-csrf-token'] = csrf_token
     return user
 
 
@@ -37,5 +37,4 @@ async def logout(response: Response, session_id: str = Cookie(None)) -> None:
         await delete_session(session_id)
     response.status_code = 204
     response.delete_cookie(key='session_id')
-    response.delete_cookie(key='csrf')
     return
