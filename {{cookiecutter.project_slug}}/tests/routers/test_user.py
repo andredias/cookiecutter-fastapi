@@ -92,10 +92,12 @@ async def test_update_user(users: ListDictStrAny, client: AsyncClient) -> None:
 
     logger.info('admin updates a user')
     await logged_session(client, admin_id)
-    resp = await client.put(url.format(user_id), json={'name': name})
+    resp = await client.put(
+        url.format(user_id), json={'name': name, 'is_admin': True}
+    )
     assert resp.status_code == 204
     user = await get_user(user_id)
-    assert user and user.name == name
+    assert user and user.name == name and user.is_admin is False
 
     logger.info('admin tries to update inexistent user')
     resp = await client.put(url.format(user_id + 1), json={'name': name})
@@ -149,7 +151,7 @@ async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
             name=fake.name(),
             email=fake.email(),
             password=fake.password(20),
-            is_admin=fake.boolean(),
+            is_admin=True,
         )
 
     admin_id = users[0]['id']
@@ -160,7 +162,8 @@ async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
     resp = await client.post('/users', content=user.json())
     assert resp.status_code == 201
     id = resp.json()['id']
-    assert (await get_user(id)) == UserInfo(**user.dict(), id=id)
+    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
+    assert (await get_user(id)) == user_info
 
     logger.info('anonymous tries to recreate an existing user account')
     resp = await client.post('/users', content=user.json())
@@ -172,7 +175,8 @@ async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
     resp = await client.post('/users', content=user.json())
     id = resp.json()['id']
     assert resp.status_code == 201
-    assert (await get_user(id)) == UserInfo(**user.dict(), id=id)
+    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
+    assert (await get_user(id)) == user_info
 
     logger.info('admin tries to create another account')
     user = fake_user()
@@ -180,4 +184,5 @@ async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
     resp = await client.post('/users', content=user.json())
     assert resp.status_code == 201
     id = resp.json()['id']
-    assert (await get_user(id)) == UserInfo(**user.dict(), id=id)
+    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
+    assert (await get_user(id)) == user_info

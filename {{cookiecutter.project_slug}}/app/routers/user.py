@@ -41,6 +41,9 @@ async def update_user(
     user: UserInfo = Depends(selected_user),
 ):
     fields = diff_models(user, patch)
+    # temporary patch for issue #5
+    # https://github.com/andredias/cookiecutter-fastapi/issues/5
+    fields.pop('is_admin', None)
     try:
         await update(id, UserPatch(**fields))
     except IntegrityConstraintViolationError:
@@ -58,6 +61,9 @@ async def delete_user(id: int, user: UserInfo = Depends(selected_user)):
 @router.post('/users', status_code=201)
 @db.transaction()
 async def create_user(user: UserInsert):
+    # temporary patch for issue #5
+    # https://github.com/andredias/cookiecutter-fastapi/issues/5
+    user.is_admin = False
     try:
         id = await insert(user)
     except IntegrityConstraintViolationError:
