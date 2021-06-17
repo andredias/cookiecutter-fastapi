@@ -3,16 +3,16 @@ from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 from pytest import mark
 
-ListDictStrAny = list[dict]
+from app.schemas.user import UserInfo
+
+Users = list[UserInfo]
+PASSWORD = 'Paulo Paulada Power'
 
 
-async def test_successful_login(
-    users: ListDictStrAny, client: AsyncClient
-) -> None:
-    email = users[0]['email']
-    password = users[0]['password']
+async def test_successful_login(users: Users, client: AsyncClient) -> None:
+    email = users[0].email
     resp = await client.post(
-        '/login', json={'email': email, 'password': password}
+        '/login', json={'email': email, 'password': PASSWORD}
     )
     assert resp.status_code == 200
     assert resp.headers.get('x-csrf-token')
@@ -23,7 +23,7 @@ async def test_successful_login(
 
 @patch('app.routers.login.delete_session')
 async def test_successful_login_with_session_id(
-    delete_session: AsyncMock, users: ListDictStrAny, client: AsyncClient
+    delete_session: AsyncMock, users: Users, client: AsyncClient
 ) -> None:
     """
     A user log in with an existing session_id which can be from the same user
@@ -31,10 +31,9 @@ async def test_successful_login_with_session_id(
     """
     session_id = 'abcd1234'
     cookies = {'session_id': session_id}
-    email = users[0]['email']
-    password = users[0]['password']
+    email = users[0].email
     resp = await client.post(
-        '/login', json={'email': email, 'password': password}, cookies=cookies
+        '/login', json={'email': email, 'password': PASSWORD}, cookies=cookies
     )
     assert resp.status_code == 200
     assert resp.cookies['session_id'] != session_id

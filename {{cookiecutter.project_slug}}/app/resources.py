@@ -7,6 +7,7 @@ from loguru import logger
 from tenacity import RetryError, retry, stop_after_delay, wait_exponential
 
 from . import config
+from .utils import populate_dev_db
 
 db = Database(config.DATABASE_URL, force_rollback=config.TESTING)
 redis = Redis.from_url(config.REDIS_URL)
@@ -18,6 +19,8 @@ async def startup():
         show_config()
     await _init_redis()
     await _init_database()
+    if config.DEBUG:
+        await populate_dev_db()
     logger.info('started...')
 
 

@@ -11,8 +11,8 @@ os.environ['ENV'] = 'testing'
 
 from app.config import DB_NAME, DB_PASSWORD, DB_PORT, REDIS_PORT  # noqa: E402
 from app.main import app as _app  # noqa: E402
-from app.models.user import insert  # noqa: E402
-from app.schemas.user import UserInsert  # noqa: E402
+from app.models.user import get_all as get_all_users  # noqa: E402
+from app.schemas.user import UserInfo  # noqa: E402
 
 
 @fixture(scope='session')
@@ -57,21 +57,9 @@ async def client(app: FastAPI) -> AsyncIterable[AsyncClient]:
 
 
 @fixture
-async def users(app) -> list[dict]:
-    users = [
-        dict(
-            name='Fulano de Tal',
-            email='fulano@email.com',
-            password='Paulo Paulada Power',
-            is_admin=True,
-        ),
-        dict(
-            name='Beltrano de Tal',
-            email='beltrano@email.com',
-            password='abcd1234',
-            is_admin=False,
-        ),
-    ]
-    for user in users:
-        user['id'] = await insert(UserInsert(**user))
-    return users
+async def users(app) -> list[UserInfo]:
+    """
+    Users were already created at app.utils.populate_dev_db
+    during app startup event.
+    """
+    return await get_all_users()

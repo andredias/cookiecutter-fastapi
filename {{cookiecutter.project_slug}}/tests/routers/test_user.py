@@ -1,5 +1,3 @@
-from typing import Any
-
 from httpx import AsyncClient
 from loguru import logger
 
@@ -7,12 +5,12 @@ from app.models.user import UserInfo, UserInsert, get_user, insert
 
 from ..utils import logged_session
 
-ListDictStrAny = list[dict[str, Any]]
+Users = list[UserInfo]
 
 
-async def test_get_users(users: ListDictStrAny, client: AsyncClient) -> None:
-    admin_id = users[0]['id']
-    user_id = users[1]['id']
+async def test_get_users(users: Users, client: AsyncClient) -> None:
+    admin_id = users[0].id
+    user_id = users[1].id
     url = '/users'
 
     await logged_session(client, admin_id)
@@ -29,16 +27,16 @@ async def test_get_users(users: ListDictStrAny, client: AsyncClient) -> None:
     assert resp.status_code == 401
 
 
-async def test_get_user(users: ListDictStrAny, client: AsyncClient) -> None:
-    admin_id = users[0]['id']
-    user_id = users[1]['id']
+async def test_get_user(users: Users, client: AsyncClient) -> None:
+    admin_id = users[0].id
+    user_id = users[1].id
     url = '/users/{}'
 
     logger.info('normal user try to access its own info')
     await logged_session(client, user_id)
     resp = await client.get(url.format(user_id))
     assert resp.status_code == 200
-    assert UserInfo(**resp.json()) == UserInfo(**users[1])
+    assert UserInfo(**resp.json()) == users[1]
 
     logger.info('normal user try to access another user info')
     resp = await client.get(url.format(admin_id))
@@ -48,7 +46,7 @@ async def test_get_user(users: ListDictStrAny, client: AsyncClient) -> None:
     await logged_session(client, admin_id)
     resp = await client.get(url.format(user_id))
     assert resp.status_code == 200
-    assert UserInfo(**resp.json()) == UserInfo(**users[1])
+    assert UserInfo(**resp.json()) == users[1]
 
     logger.info('admin access to inexistent user')
     resp = await client.get(url.format(user_id + 1))
@@ -60,9 +58,9 @@ async def test_get_user(users: ListDictStrAny, client: AsyncClient) -> None:
     assert resp.status_code == 401
 
 
-async def test_update_user(users: ListDictStrAny, client: AsyncClient) -> None:
-    admin_id = users[0]['id']
-    user_id = users[1]['id']
+async def test_update_user(users: Users, client: AsyncClient) -> None:
+    admin_id = users[0].id
+    user_id = users[1].id
     url = '/users/{}'
     email = 'beltrano@pronus.io'
     name = 'Belafonte'
@@ -85,9 +83,7 @@ async def test_update_user(users: ListDictStrAny, client: AsyncClient) -> None:
     assert user and user.email == email
 
     logger.info('normal user tries to update existing email')
-    resp = await client.put(
-        url.format(user_id), json={'email': users[0]['email']}
-    )
+    resp = await client.put(url.format(user_id), json={'email': users[0].email})
     assert resp.status_code == 422
 
     logger.info('admin updates a user')
@@ -104,9 +100,9 @@ async def test_update_user(users: ListDictStrAny, client: AsyncClient) -> None:
     assert resp.status_code == 404
 
 
-async def test_delete_user(users: ListDictStrAny, client: AsyncClient) -> None:
-    admin_id = users[0]['id']
-    user_id = users[1]['id']
+async def test_delete_user(users: Users, client: AsyncClient) -> None:
+    admin_id = users[0].id
+    user_id = users[1].id
     third_id = await insert(
         UserInsert(
             name='Sicrano',
@@ -140,7 +136,7 @@ async def test_delete_user(users: ListDictStrAny, client: AsyncClient) -> None:
     assert resp.status_code == 404
 
 
-async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
+async def test_create_user(users: Users, client: AsyncClient) -> None:
     from faker import Faker
 
     fake = Faker()
@@ -154,8 +150,8 @@ async def test_create_user(users: ListDictStrAny, client: AsyncClient) -> None:
             is_admin=True,
         )
 
-    admin_id = users[0]['id']
-    user_id = users[1]['id']
+    admin_id = users[0].id
+    user_id = users[1].id
 
     logger.info('anonymous tries to create a user account')
     user = fake_user()
