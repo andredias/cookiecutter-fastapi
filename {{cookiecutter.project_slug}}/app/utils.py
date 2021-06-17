@@ -1,5 +1,9 @@
 async def populate_dev_db():
-    from .models.user import UserInsert, insert
+    from .models.user import UserInsert, get_all, insert
+
+    records = await get_all()
+    if records:
+        return
 
     users = [
         dict(
@@ -11,7 +15,7 @@ async def populate_dev_db():
         dict(
             name='Beltrano de Tal',
             email='beltrano@email.com',
-            password='abcd1234',
+            password='abcdefgh1234567890',
             is_admin=False,
         ),
     ]
