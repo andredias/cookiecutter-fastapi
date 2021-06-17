@@ -182,3 +182,11 @@ async def test_create_user(users: Users, client: AsyncClient) -> None:
     id = resp.json()['id']
     user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
     assert (await get_user(id)) == user_info
+
+
+async def test_get_me(users: Users, client: AsyncClient):
+    user_id = users[1].id
+    await logged_session(client, user_id)
+    resp = await client.get('/users/me')
+    assert resp.status_code == 200
+    assert UserInfo(**resp.json()) == users[1]

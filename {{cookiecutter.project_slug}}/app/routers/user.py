@@ -2,8 +2,8 @@ from asyncpg.exceptions import IntegrityConstraintViolationError
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
-from ..authentication import admin_user, authenticated_user
-from ..models.user import delete, get_all, get_user, insert, update
+from ..authentication import admin_user, authenticated_user, resource_owner
+from ..models.user import delete, get_all, insert, update
 from ..resources import db
 from ..schemas import diff_models
 from ..schemas.user import UserInfo, UserInsert, UserPatch
@@ -11,25 +11,18 @@ from ..schemas.user import UserInfo, UserInsert, UserPatch
 router = APIRouter()
 
 
-async def selected_user(
-    id: int,
-    current_user: UserInfo = Depends(authenticated_user),
-) -> UserInfo:
-    if id != current_user.id and not current_user.is_admin:
-        raise HTTPException(403)
-    user = current_user if id == current_user.id else await get_user(id)
-    if not user:
-        raise HTTPException(404)
-    return user
-
-
 @router.get('/users', response_model=list[UserInfo])
 async def get_users(admin: UserInfo = Depends(admin_user)):
     return await get_all()
 
 
+@router.get('/users/me', response_model=UserInfo)
+async def get_self_info(user: UserInfo = Depends(authenticated_user)):
+    return user
+
+
 @router.get('/users/{id}', response_model=UserInfo)
-async def get_user_info(id: int, user: UserInfo = Depends(selected_user)):
+async def get_user_info(id: int, user: UserInfo = Depends(resource_owner)):
     return user
 
 
@@ -38,7 +31,7 @@ async def get_user_info(id: int, user: UserInfo = Depends(selected_user)):
 async def update_user(
     id: int,
     patch: UserPatch,
-    user: UserInfo = Depends(selected_user),
+    user: UserInfo = Depends(resource_owner),
 ):
     fields = diff_models(user, patch)
     # temporary patch for issue #5
@@ -54,7 +47,7 @@ async def update_user(
 
 @router.delete('/users/{id}', status_code=204)
 @db.transaction()
-async def delete_user(id: int, user: UserInfo = Depends(selected_user)):
+async def delete_user(id: int, user: UserInfo = Depends(resource_owner)):
     await delete(id)
 
 

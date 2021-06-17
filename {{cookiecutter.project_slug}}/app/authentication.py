@@ -40,3 +40,17 @@ async def admin_user(
     if not user.is_admin:
         raise HTTPException(status_code=403)
     return user
+
+
+async def resource_owner(
+    id: int,
+    current_user: UserInfo = Depends(authenticated_user),
+) -> UserInfo:
+    if id == current_user.id:
+        return current_user
+    if not current_user.is_admin:
+        raise HTTPException(403)
+    user = await get_user(id)
+    if not user:
+        raise HTTPException(404)
+    return user
