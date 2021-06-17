@@ -36,6 +36,6 @@ USER nobody
 COPY --chown=nobody:nogroup hypercorn.toml .
 COPY --chown=nobody:nogroup app/ ./app
 
-EXPOSE 8000
+EXPOSE 5000
 
 CMD ["hypercorn", "--config=hypercorn.toml", "app.main:app"]
