@@ -7,3 +7,5 @@ syntax: glob
 .mypy_cache
 .pytest_cache
 .vscode
+.coverage
+htmlcov
