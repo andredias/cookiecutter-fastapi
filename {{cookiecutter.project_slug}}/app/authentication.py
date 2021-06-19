@@ -13,6 +13,10 @@ async def authenticated_session(
     """
     FastAPI Dependency to get authenticated session data.
     If no valid session is found, it raises an HTTP Error 401
+
+    Obs: Cookie(...) and Header(...) would raise 'field required' errors
+         instead of 401 errors.
+         So, we must use Cookie(None) instead of Cookie(...)
     """
     if (
         session_id
