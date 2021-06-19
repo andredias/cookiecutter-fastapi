@@ -22,7 +22,7 @@ async def login(
     user = await get_user_by_login(rec.email, rec.password)
     if user is None:
         raise HTTPException(status_code=404, detail='invalid email or password')
-    session_id = await create_session({'user_id': user.id})
+    session_id = await create_session(f'user:{user.id}', {'user_id': user.id})
     csrf_token = create_csrf(session_id)
     response.set_cookie(
         key='session_id', value=session_id, httponly=True, secure=True

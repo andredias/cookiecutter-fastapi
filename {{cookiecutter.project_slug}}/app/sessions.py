@@ -10,28 +10,32 @@ from . import config
 from .resources import redis
 
 
-async def create_session(data: dict[str, Any]) -> str:
+async def create_session(
+    prefix: str, data: dict[str, Any], lifetime: Optional[int] = None
+) -> str:
     """
     Creates a random session_id and stores the related data into Redis.
     """
-    session_id: str = token_urlsafe(config.SESSION_ID_LENGTH)
-    await redis.set(session_id, json.dumps(data), ex=config.SESSION_LIFETIME)
+    session_id: str = f'{prefix}:{token_urlsafe(config.SESSION_ID_LENGTH)}'
+    lifetime = lifetime or config.SESSION_LIFETIME
+    await redis.set(session_id, json.dumps(data), ex=lifetime)
     return session_id
 
 
-async def get_session(session_id: str) -> Optional[dict[str, Any]]:
+async def get_session(
+    session_id: str, expire: Optional[int] = None
+) -> dict[str, Any]:
     payload = await redis.get(session_id)
-    data = None
-    if payload is not None:
-        data = json.loads(payload)
-        await redis.expire(
-            session_id, config.SESSION_LIFETIME
-        )  # renew expiration date
+    if payload is None:
+        return {}
+    data = json.loads(payload)
+    expire = expire or config.SESSION_LIFETIME
+    await redis.expire(session_id, expire)  # renew expiration date
     return data
 
 
-async def delete_session(session_id: str) -> None:
-    await redis.delete(session_id)
+async def delete_session(*args) -> None:
+    await redis.delete(*args)
 
 
 async def session_exists(session_id: str) -> bool:

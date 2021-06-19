@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 from loguru import logger
 
-from app.sessions import (  # isort:skip
+from app.sessions import (
     create_csrf,
     create_session,
     delete_session,
@@ -16,7 +16,7 @@ async def test_session(app) -> None:
     data = {'user_id': 1}
 
     logger.info('create session')
-    session_id = await create_session(data)
+    session_id = await create_session('user:1', data)
     assert session_id
     assert await session_exists(session_id)
 
@@ -27,12 +27,13 @@ async def test_session(app) -> None:
     logger.info('delete_session')
     await delete_session(session_id)
     resp_data = await get_session(session_id)
-    assert resp_data is None
+    assert resp_data == {}
     assert not await session_exists(session_id)
 
 
 async def test_create_csrf(app) -> None:
-    session_id = await create_session({'user_id': 12345})
+    user_id = 12345
+    session_id = await create_session(f'user:{user_id}', {'user_id': user_id})
     csrf = create_csrf(session_id)
     assert is_valid_csrf(session_id, csrf)
 
@@ -40,7 +41,7 @@ async def test_create_csrf(app) -> None:
 @patch('app.sessions.redis', new_callable=AsyncMock)
 async def test_renew_session(redis: AsyncMock, app) -> None:
     data = {'user_id': 1}
-    session_id = await create_session(data)
+    session_id = await create_session('user:1', data)
     redis.get.return_value = '{"user_id": 1}'
     _ = await get_session(session_id)
     assert redis.expire.call_count == 1

@@ -4,7 +4,7 @@ from loguru import logger
 
 from ..authentication import admin_user, authenticated_user, resource_owner
 from ..models.user import delete, get_all, insert, update
-from ..resources import db
+from ..resources import db, redis
 from ..schemas import diff_models
 from ..schemas.user import UserInfo, UserInsert, UserPatch
 
@@ -49,6 +49,8 @@ async def update_user(
 @db.transaction()
 async def delete_user(id: int, user: UserInfo = Depends(resource_owner)):
     await delete(id)
+    sessions = await redis.keys(f'user:{id}*')
+    await redis.delete(*sessions)
 
 
 @router.post('/users', status_code=201)

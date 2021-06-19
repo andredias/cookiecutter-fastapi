@@ -2,6 +2,7 @@ from httpx import AsyncClient
 from loguru import logger
 
 from app.models.user import UserInfo, UserInsert, get_user, insert
+from app.sessions import create_session, session_exists
 
 from ..utils import logged_session
 
@@ -127,9 +128,12 @@ async def test_delete_user(users: Users, client: AsyncClient) -> None:
     assert await get_user(third_id) is None
 
     logger.info('admin deletes a user')
+    session_id = await create_session(f'user:{user_id}', {})
+    assert await session_exists(session_id)
     await logged_session(client, admin_id)
     resp = await client.delete(url.format(user_id))
     assert resp.status_code == 204
+    assert not await session_exists(session_id)
 
     logger.info('admin tries to delete inexistent user')
     resp = await client.delete(url.format(user_id + 1))
