@@ -1,38 +1,32 @@
-from typing import Any
+import re
 
 from fastapi import Cookie, Depends, Header, HTTPException
 
 from .models.user import get_user
 from .schemas.user import UserInfo
-from .sessions import get_session, is_valid_csrf
+from .sessions import is_valid_csrf, session_exists
 
 
-async def authenticated_session(
+async def authenticated_user(
     session_id: str = Cookie(None), x_csrf_token: str = Header(None)
-) -> dict[str, Any]:
+) -> UserInfo:
     """
-    FastAPI Dependency to get authenticated session data.
-    If no valid session is found, it raises an HTTP Error 401
+    FastAPI Dependency to verify session_id and its correspondent csrf_token.
 
     Obs: Cookie(...) and Header(...) would raise 'field required' errors
          instead of 401 errors.
          So, we must use Cookie(None) instead of Cookie(...)
     """
-    if (
+    if not (
         session_id
         and x_csrf_token
+        and (match := re.match(r'user:(\d+):', session_id))
         and is_valid_csrf(session_id, x_csrf_token)
-        and (data := await get_session(session_id))
+        and session_exists(session_id)
     ):
-        return data
-    else:
         raise HTTPException(status_code=401)
-
-
-async def authenticated_user(
-    data: dict[str, Any] = Depends(authenticated_session)
-) -> UserInfo:
-    user = await get_user(data['id'])
+    user_id = int(match.group(1))
+    user = await get_user(user_id)
     if not user:
         raise HTTPException(status_code=401)
     return user

@@ -128,7 +128,7 @@ async def test_delete_user(users: Users, client: AsyncClient) -> None:
     assert await get_user(third_id) is None
 
     logger.info('admin deletes a user')
-    session_id = await create_session(f'user:{user_id}', {})
+    session_id = await create_session(f'user:{user_id}')
     assert await session_exists(session_id)
     await logged_session(client, admin_id)
     resp = await client.delete(url.format(user_id))

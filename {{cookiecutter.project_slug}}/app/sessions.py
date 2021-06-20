@@ -2,36 +2,27 @@ import hmac
 from base64 import b64encode
 from hashlib import sha256
 from secrets import token_urlsafe
-from typing import Any, Optional
-
-import orjson as json
+from typing import Optional
 
 from . import config
 from .resources import redis
 
 
 async def create_session(
-    prefix: str, data: dict[str, Any], lifetime: Optional[int] = None
+    prefix: str, payload: str = '', lifetime: Optional[int] = None
 ) -> str:
     """
     Creates a random session_id and stores the related data into Redis.
     """
     session_id: str = f'{prefix}:{token_urlsafe(config.SESSION_ID_LENGTH)}'
     lifetime = lifetime or config.SESSION_LIFETIME
-    await redis.set(session_id, json.dumps(data), ex=lifetime)
+    await redis.set(session_id, payload, ex=lifetime)
     return session_id
 
 
-async def get_session(
-    session_id: str, expire: Optional[int] = None
-) -> dict[str, Any]:
+async def get_session_payload(session_id: str) -> Optional[str]:
     payload = await redis.get(session_id)
-    if payload is None:
-        return {}
-    data = json.loads(payload)
-    expire = expire or config.SESSION_LIFETIME
-    await redis.expire(session_id, expire)  # renew expiration date
-    return data
+    return payload
 
 
 async def delete_session(*args) -> None:
@@ -39,7 +30,7 @@ async def delete_session(*args) -> None:
 
 
 async def session_exists(session_id: str) -> bool:
-    return await redis.exists(session_id)
+    return bool(await redis.exists(session_id))
 
 
 def create_csrf(session_id: str) -> str:
