@@ -83,9 +83,13 @@ async def test_update_user(users: Users, client: AsyncClient) -> None:
     user = await get_user(user_id)
     assert user and user.email == email
 
-    logger.info('normal user tries to update existing email')
+    logger.info('normal user tries to update with an existing email')
     resp = await client.put(url.format(user_id), json={'email': users[0].email})
     assert resp.status_code == 422
+
+    logger.info('normal user tries to become admin')
+    resp = await client.put(url.format(user_id), json={'is_admin': True})
+    assert resp.status_code == 403
 
     logger.info('admin updates a user')
     await logged_session(client, admin_id)
@@ -94,7 +98,7 @@ async def test_update_user(users: Users, client: AsyncClient) -> None:
     )
     assert resp.status_code == 204
     user = await get_user(user_id)
-    assert user and user.name == name and user.is_admin is False
+    assert user and user.name == name and user.is_admin is True
 
     logger.info('admin tries to update inexistent user')
     resp = await client.put(url.format(user_id + 1), json={'name': name})
@@ -151,7 +155,7 @@ async def test_create_user(users: Users, client: AsyncClient) -> None:
             name=fake.name(),
             email=fake.email(),
             password=fake.password(20),
-            is_admin=True,
+            is_admin=fake.boolean(),
         )
 
     admin_id = users[0].id
@@ -160,32 +164,21 @@ async def test_create_user(users: Users, client: AsyncClient) -> None:
     logger.info('anonymous tries to create a user account')
     user = fake_user()
     resp = await client.post('/users', content=user.json())
-    assert resp.status_code == 201
-    id = resp.json()['id']
-    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
-    assert (await get_user(id)) == user_info
-
-    logger.info('anonymous tries to recreate an existing user account')
-    resp = await client.post('/users', content=user.json())
-    assert resp.status_code == 422
+    assert resp.status_code == 401
 
     logger.info('user tries to create another account')
     user = fake_user()
     await logged_session(client, user_id)
     resp = await client.post('/users', content=user.json())
-    id = resp.json()['id']
-    assert resp.status_code == 201
-    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
-    assert (await get_user(id)) == user_info
+    assert resp.status_code == 403
 
     logger.info('admin tries to create another account')
-    user = fake_user()
     await logged_session(client, admin_id)
+    user = fake_user()
+    user.is_admin = True
     resp = await client.post('/users', content=user.json())
     assert resp.status_code == 201
-    id = resp.json()['id']
-    user_info = UserInfo(**user.dict(exclude={'is_admin'}), id=id, is_admin=False)
-    assert (await get_user(id)) == user_info
+    assert resp.json()
 
 
 async def test_get_me(users: Users, client: AsyncClient):

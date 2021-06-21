@@ -40,15 +40,10 @@ async def admin_user(
     return user
 
 
-async def resource_owner(
+async def owner_or_admin(
     id: int,
     current_user: UserInfo = Depends(authenticated_user),
 ) -> UserInfo:
-    if id == current_user.id:
+    if id == current_user.id or current_user.is_admin:
         return current_user
-    if not current_user.is_admin:
-        raise HTTPException(403)
-    user = await get_user(id)
-    if not user:
-        raise HTTPException(404)
-    return user
+    raise HTTPException(403)
