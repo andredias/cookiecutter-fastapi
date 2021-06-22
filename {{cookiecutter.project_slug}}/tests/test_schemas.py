@@ -15,10 +15,10 @@ def test_password():
     check_password('new password!!!')
 
 
-@mark.parametrize('UserClass', [UserInsert, UserPatch])
-def test_user_model(UserClass):
+@mark.parametrize('user_schema', [UserInsert, UserPatch])
+def test_user_model(user_schema):
     with raises(ValueError):
-        UserClass(
+        user_schema(
             name='abcdef',
             email='invalid.email.com',
             password='valid password!!!',
@@ -26,8 +26,8 @@ def test_user_model(UserClass):
         )
 
     with raises(ValueError):
-        UserClass(name='abcdef', email='valid@email.com', password='invalid')
+        user_schema(name='abcdef', email='valid@email.com', password='invalid')
 
-    assert UserClass(
+    assert user_schema(
         name='abcdef', email='valid@email.com', password='valid password!!!'
     )
