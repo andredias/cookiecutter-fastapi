@@ -30,3 +30,6 @@ SECRET_KEY = bytes(os.getenv('SECRET_KEY', ''), 'utf-8') or secrets.token_bytes(
 )
 SESSION_ID_LENGTH = int(os.getenv('SESSION_ID_LENGTH', 16))
 SESSION_LIFETIME = int(timedelta(days=7).total_seconds())
+
+PASSWORD_MIN_LENGTH = int(os.getenv('PASSWORD_MIN_LENGTH', 15))
+PASSWORD_MIN_VARIETY = int(os.getenv('PASSWORD_MIN_VARIETY', 5))
