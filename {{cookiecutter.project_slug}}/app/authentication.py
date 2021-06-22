@@ -22,7 +22,7 @@ async def authenticated_user(
         and x_csrf_token
         and (match := re.match(r'user:(\d+):', session_id))
         and is_valid_csrf(session_id, x_csrf_token)
-        and session_exists(session_id)
+        and await session_exists(session_id)
     ):
         raise HTTPException(status_code=401)
     user_id = int(match.group(1))
