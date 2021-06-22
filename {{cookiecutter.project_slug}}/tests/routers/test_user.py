@@ -75,9 +75,17 @@ async def test_update_user(users: Users, client: AsyncClient) -> None:
     resp = await client.put(url.format(admin_id), json={'email': email})
     assert resp.status_code == 403
 
+    logger.info('invalid password')
+    resp = await client.put(
+        url.format(user_id),
+        json={'email': email, 'password': 'password123'},
+    )
+    assert resp.status_code == 422
+
     logger.info('normal user tries to update his own account')
     resp = await client.put(
-        url.format(user_id), json={'email': email, 'password': 'password123'}
+        url.format(user_id),
+        json={'email': email, 'password': 'new password 123!'},
     )
     assert resp.status_code == 204
     user = await get_user(user_id)

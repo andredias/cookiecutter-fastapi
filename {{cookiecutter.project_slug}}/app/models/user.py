@@ -38,6 +38,13 @@ async def get_all() -> list[UserInfo]:
     return [UserInfo(**r) for r in result]
 
 
+async def get_user_by_email(email: str) -> Optional[UserInfo]:
+    query = User.select(User.c.email == email)
+    logger.debug(query)
+    result = await db.fetch_one(query)
+    return UserInfo(**result) if result else None
+
+
 async def get_user_by_login(email: str, password: str) -> Optional[UserInfo]:
     query = User.select(User.c.email == email)
     logger.debug(query)
