@@ -6,7 +6,7 @@ lint:
 	@echo
 	flake8 {{cookiecutter.project_slug}}
 	@echo
-	mypy --ignore-missing-imports --install-types {{cookiecutter.project_slug}}
+	mypy --ignore-missing-imports {{cookiecutter.project_slug}}
 
 
 format_code:
