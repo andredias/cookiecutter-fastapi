@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "Projeto"
+name = "{{cookiecutter.project_name}}"
 version = "0.1.0"
 description = ""
-authors = [" <>"]
+authors = ["{{cookiecutter.author}} <{{cookiecutter.email}}>"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -14,6 +14,7 @@ asyncpg = "*"
 databases = "*"
 email_validator = "*"
 fastapi = "*"
+fastapi-mail = "*"
 Hypercorn = "*"
 loguru = "*"
 orjson = "*"
