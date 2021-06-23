@@ -217,6 +217,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-orjson"
+version = "0.1.1"
+description = "Typing stubs for orjson"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "3.10.0.0"
 description = "Backported and Experimental Type Hints for Python 3.5+"
@@ -227,7 +235,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d56f4203a38aa425098e45b6b90bc3fe1b7e0b9f6a2ce2523152d398acc19f06"
+content-hash = "96c439ef4829afaf80a02957c4176f554b5bb841513aa0389bbc9b653669aeaa"
 
 [metadata.files]
 appdirs = [
@@ -399,6 +407,10 @@ typed-ast = [
     {file = "typed_ast-1.4.3-cp39-cp39-win32.whl", hash = "sha256:209596a4ec71d990d71d5e0d312ac935d86930e6eecff6ccc7007fe54d703808"},
     {file = "typed_ast-1.4.3-cp39-cp39-win_amd64.whl", hash = "sha256:9c6d1a54552b5330bc657b7ef0eae25d00ba7ffe85d9ea8ae6540d2197a3788c"},
     {file = "typed_ast-1.4.3.tar.gz", hash = "sha256:fb1bbeac803adea29cedd70781399c99138358c26d05fcbd23c13016b7f5ec65"},
+]
+types-orjson = [
+    {file = "types-orjson-0.1.1.tar.gz", hash = "sha256:7454bfbaed27900a844bb9d8e211b69f1c335f0b9e3541d4950a793db41c104d"},
+    {file = "types_orjson-0.1.1-py2.py3-none-any.whl", hash = "sha256:92f85986261ea1a5cb215e4b35e4016631d35163a372f023918750f340ea737f"},
 ]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.0-py2-none-any.whl", hash = "sha256:0ac0f89795dd19de6b97debb0c6af1c70987fd80a2d62d1958f7e56fcc31b497"},
