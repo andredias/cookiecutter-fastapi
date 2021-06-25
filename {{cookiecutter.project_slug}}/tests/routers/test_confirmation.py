@@ -3,15 +3,15 @@ from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 from loguru import logger
 
+from app.mailer import mailer
 from app.models.user import UserInfo, UserInsert, get_user_by_login
 from app.sessions import create_session, delete_session, session_exists
 
 Users = list[UserInfo]
 
 
-@patch('app.routers.confirmation.create_session')
 async def test_send_reset_password_instructions(
-    create_session: AsyncMock, users: Users, client: AsyncClient
+    users: Users, client: AsyncClient
 ) -> None:
     logger.info('invalid email')
     email = 'teste123email.com'
@@ -22,18 +22,34 @@ async def test_send_reset_password_instructions(
 
     logger.info('valid but non-existing email')
     email = 'teste@email.com'
-    resp = await client.get(
-        '/send_reset_password_instructions', params={'email': email}
-    )
+    with patch(
+        'app.routers.confirmation.create_session', new_callable=AsyncMock
+    ) as create_session:
+        resp = await client.get(
+            '/send_reset_password_instructions', params={'email': email}
+        )
     assert resp.status_code == 200
     create_session.assert_not_awaited()
 
     logger.info('valid existing email')
-    resp = await client.get(
-        '/send_reset_password_instructions', params={'email': users[1].email}
-    )
+    with mailer.record_messages() as outbox:
+        resp = await client.get(
+            '/send_reset_password_instructions', params={'email': users[1].email}
+        )
     assert resp.status_code == 200
-    create_session.assert_awaited()
+    assert len(outbox) == 1
+    assert 'no-reply@' in outbox[0]['from']
+    assert outbox[0]['To'] == users[1].email
+
+    logger.info('too many requests')
+    with patch(
+        'app.routers.confirmation.create_session', new_callable=AsyncMock
+    ) as create_session:
+        resp = await client.get(
+            '/send_reset_password_instructions', params={'email': users[1].email}
+        )
+    assert resp.status_code == 429
+    create_session.assert_not_awaited()
 
 
 async def test_reset_password(users: Users, client: AsyncClient) -> None:
@@ -81,9 +97,8 @@ async def test_reset_password(users: Users, client: AsyncClient) -> None:
     assert (await session_exists(session_id)) is False
 
 
-@patch('app.routers.confirmation.create_session')
 async def test_send_register_user_instructions(
-    create_session: AsyncMock, users: Users, client: AsyncClient
+    users: Users, client: AsyncClient
 ) -> None:
     logger.info('invalid email')
     email = 'teste123email.com'
@@ -93,19 +108,35 @@ async def test_send_register_user_instructions(
     assert resp.status_code == 422
 
     logger.info('valid but email already exists')
-    resp = await client.get(
-        '/send_register_user_instructions', params={'email': users[1].email}
-    )
+    with patch(
+        'app.routers.confirmation.create_session', new_callable=AsyncMock
+    ) as create_session:
+        resp = await client.get(
+            '/send_register_user_instructions', params={'email': users[1].email}
+        )
     assert resp.status_code == 200
     create_session.assert_not_awaited()
 
     logger.info('valid non-existing email')
     email = 'teste@email.com'
-    resp = await client.get(
-        '/send_register_user_instructions', params={'email': email}
-    )
+    with mailer.record_messages() as outbox:
+        resp = await client.get(
+            '/send_register_user_instructions', params={'email': email}
+        )
     assert resp.status_code == 200
-    create_session.assert_awaited()
+    assert len(outbox) == 1
+    assert 'no-reply@' in outbox[0]['from']
+    assert outbox[0]['To'] == email
+
+    logger.info('too many requests')
+    with patch(
+        'app.routers.confirmation.create_session', new_callable=AsyncMock
+    ) as create_session:
+        resp = await client.get(
+            '/send_register_user_instructions', params={'email': email}
+        )
+    assert resp.status_code == 429
+    create_session.assert_not_awaited()
 
 
 async def test_register_user(users: Users, client: AsyncClient) -> None:

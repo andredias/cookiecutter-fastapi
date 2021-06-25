@@ -1,8 +1,21 @@
+from pathlib import Path
+from urllib.parse import urlencode
+
 from email_validator import EmailNotValidError, validate_email
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    HTTPException,
+    Query,
+)
+from fastapi_mail import MessageSchema
 from loguru import logger
 from pydantic import EmailStr
 
+from .. import config
+from ..mailer import mailer, templates
 from ..models.user import (
     UserInfo,
     UserInsert,
@@ -51,7 +64,9 @@ def validate_password(password: str = Body(...)) -> str:
 
 @router.get('/send_reset_password_instructions')
 async def send_reset_password_instructions(
-    email: EmailStr, language: str = Query('en')
+    email: EmailStr,
+    background_tasks: BackgroundTasks,
+    language: str = Query('en'),
 ):
     """
     Send an email with a link to create a new password
@@ -60,8 +75,40 @@ async def send_reset_password_instructions(
     if not user:
         logger.warning(f'email {email} non-existent in the database')
         return
-    await create_session(email, str(user.id), lifetime=3600)
-    # TODO: send email in the background
+
+    if await session_exists(f'{email}:*'):
+        raise HTTPException(429)
+
+    session_id = await create_session(email, str(user.id), lifetime=3600)
+    if language == 'pt-BR':
+        subject = f'Redefina a senha para {config.APP_NAME}'
+        app_name = config.APP_NAME
+    else:
+        subject = f'Reset your {config.APP_NAME} password'
+        app_name = config.APP_NAME
+
+    params = {
+        'name': user.name,
+        'app_name': app_name,
+        'app_url': config.APP_URL,
+        'email': email,
+        'reset_password_link': str(
+            Path(
+                config.APP_URL,
+                'reset_password',
+                urlencode(dict(session_id=session_id)),
+            )
+        ),
+    }
+    template = templates.get_template(f'reset_password.{language}.html')
+    message = MessageSchema(
+        subject=subject,
+        recipients=[
+            email,
+        ],
+        html=template.render(params),
+    )
+    background_tasks.add_task(mailer.send_message, message)
     return
 
 
@@ -84,14 +131,47 @@ async def reset_password(
 
 @router.get('/send_register_user_instructions')
 async def send_register_user_instructions(
-    email: EmailStr, language: str = Query('en')
+    email: EmailStr,
+    background_tasks: BackgroundTasks,
+    language: str = Query('en'),
 ):
     user = await get_user_by_email(email)
     if user:
         logger.warning(f'email {email} already exists in the database')
         return
-    await create_session(email, lifetime=3600)
-    # TODO: send email confirmation in background
+
+    if await session_exists(f'{email}:*'):
+        raise HTTPException(429)
+
+    session_id = await create_session(email, lifetime=3600)
+    if language == 'pt-BR':
+        subject = f'Confirme seu endereço de email para {config.APP_NAME}'
+        app_name = config.APP_NAME
+    else:
+        subject = f'Confirm your email address to {config.APP_NAME}'
+        app_name = config.APP_NAME
+
+    params = {
+        'app_name': app_name,
+        'app_url': config.APP_URL,
+        'email': email,
+        'reset_password_link': str(
+            Path(
+                config.APP_URL,
+                'register_user',
+                urlencode(dict(session_id=session_id)),
+            )
+        ),
+    }
+    template = templates.get_template(f'register_user.{language}.html')
+    message = MessageSchema(
+        subject=subject,
+        recipients=[
+            email,
+        ],
+        html=template.render(params),
+    )
+    background_tasks.add_task(mailer.send_message, message)
     return
 
 

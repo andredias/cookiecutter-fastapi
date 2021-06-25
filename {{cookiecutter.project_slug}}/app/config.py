@@ -16,7 +16,7 @@ LOG_LEVEL = os.getenv('LOG_LEVEL') or DEBUG and 'DEBUG' or 'INFO'
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'development_1234')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT') or TESTING and '5431' or '5432'
-DB_NAME = os.getenv('DB_NAME', '{{cookiecutter.project_slug}}')
+DB_NAME = os.getenv('DB_NAME', 'resume_builder')
 DATABASE_URL = (
     os.getenv('DATABASE_URL')
     or f'postgresql://postgres:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
@@ -33,3 +33,14 @@ SESSION_LIFETIME = int(timedelta(days=7).total_seconds())
 
 PASSWORD_MIN_LENGTH = int(os.getenv('PASSWORD_MIN_LENGTH', 15))
 PASSWORD_MIN_VARIETY = int(os.getenv('PASSWORD_MIN_VARIETY', 5))
+
+# mail
+MAIL_USERNAME = os.environ['MAIL_USERNAME']
+MAIL_PASSWORD = os.environ['MAIL_PASSWORD']
+MAIL_FROM = os.environ['MAIL_FROM']
+MAIL_PORT = int(os.environ['MAIL_PORT'])
+MAIL_SERVER = os.environ['MAIL_SERVER']
+MAIL_FROM_NAME = os.environ['MAIL_FROM_NAME']
+
+APP_URL = os.environ['APP_URL']
+APP_NAME = os.environ['APP_NAME']

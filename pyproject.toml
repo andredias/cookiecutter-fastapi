@@ -16,6 +16,7 @@ mypy = "*"
 
 [tool.poetry.dev-dependencies]
 types-orjson = "^0.1.1"
+types-Jinja2 = "^2.11.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -3,6 +3,7 @@
   "email": "",
   "project_name": "Projeto",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+  "dev_test_db_password": "{{ random_ascii_string(24) }}",
   "python_version": "3.9",
   "version_control": ["hg", "git"]
 }
