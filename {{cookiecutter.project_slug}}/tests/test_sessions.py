@@ -11,6 +11,7 @@ from app.sessions import (
     get_session_payload,
     is_valid_csrf,
     session_exists,
+    session_keys,
 )
 
 
@@ -46,3 +47,15 @@ async def test_renew_session(redis: AsyncMock, app) -> None:
     redis.get.return_value = '{"user_id": 1}'
     _ = await get_session_payload(session_id)
     assert redis.expire.call_count == 1
+
+
+async def test_session_keys(app):
+    sessions = [
+        await create_session('test@email.com'),
+        await create_session('user:1234'),
+        await create_session('user:23455'),
+    ]
+
+    keys = await session_keys('user:*')
+    assert len(keys) == 2
+    assert sessions[0] not in keys

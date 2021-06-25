@@ -29,8 +29,13 @@ async def delete_session(*args) -> None:
     await redis.delete(*args)
 
 
+async def session_keys(pattern: str) -> list[str]:
+    "Returns a list of keys matching ``pattern``"
+    return await redis.keys(pattern)
+
+
 async def session_exists(session_id: str) -> bool:
-    return bool(await redis.exists(session_id))
+    return len(await session_keys(session_id)) > 0
 
 
 def create_csrf(session_id: str) -> str:
