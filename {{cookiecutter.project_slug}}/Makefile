@@ -3,7 +3,7 @@
 
 run:
 	@ docker-compose --env-file .env.development up -d; \
-	trap 'docker-compose down' INT; \
+	trap 'docker-compose stop' INT; \
 	export $$(grep -v '^#.*' .env.development | xargs); \
 	hypercorn --reload --config=hypercorn.toml 'app.main:app'
 
@@ -26,10 +26,9 @@ format_code:
 
 test_only:
 	@ docker-compose --env-file .env.testing up -d; \
-	trap 'docker-compose down' INT; \
 	export $$(grep -v '^#.*' .env.testing | xargs); \
 	pytest -svx --cov-report term-missing --cov-report html --cov-branch \
-			--cov app/
+			--cov app/; \
 	docker-compose down
 
 
