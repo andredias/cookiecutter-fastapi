@@ -7,13 +7,13 @@ services:
         image: "redis:latest"
         init: true
         ports:
-            - "$REDIS_PORT:6379"
+            - "${REDIS_PORT}:6379"
 
     postgres:
         container_name: postgres
         image: postgres:alpine
         ports:
-            - "$DB_PORT:5432"
+            - "${DB_PORT}:5432"
         environment:
             POSTGRES_DB: $DB_NAME
             POSTGRES_PASSWORD: $DB_PASSWORD
