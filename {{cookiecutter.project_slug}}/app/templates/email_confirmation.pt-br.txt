@@ -1,0 +1,17 @@
+{% raw %}
+Confirmação de Endereço de E-mail
+---------------------------------
+
+Olá{% if name%} {{name}} {% endif%}!
+
+Estamos quase lá. Para continuar seu registro, precisamos que você confirme se seu endereço de e-mail é {{email}}. Basta clicar no link abaixo:
+
+
+{{register_user_link}}
+
+
+Este link é valido por apenas *1 hora*. Depois disso, você terá que fazer um novo pedido de confirmação de email.
+
+— A equipe do {{app_name}}
+{% endraw %}
+

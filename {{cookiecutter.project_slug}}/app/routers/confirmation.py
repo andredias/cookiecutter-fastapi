@@ -100,13 +100,15 @@ async def send_reset_password_instructions(
             )
         ),
     }
-    template = templates.get_template(f'reset_password.{language}.html')
+    template = templates.get_template(f'reset_password.{language.lower()}.txt')
+    text = template.render(params)
+    template = templates.get_template(f'reset_password.{language.lower()}.html')
+    html = template.render(params)
     message = MessageSchema(
         subject=subject,
-        recipients=[
-            email,
-        ],
-        html=template.render(params),
+        recipients=[email],
+        body=text,
+        html=html,
     )
     background_tasks.add_task(mailer.send_message, message)
     return
@@ -155,7 +157,7 @@ async def send_register_user_instructions(
         'app_name': app_name,
         'app_url': config.APP_URL,
         'email': email,
-        'reset_password_link': str(
+        'register_user_link': str(
             Path(
                 config.APP_URL,
                 'register_user',
@@ -163,13 +165,19 @@ async def send_register_user_instructions(
             )
         ),
     }
-    template = templates.get_template(f'register_user.{language}.html')
+    template = templates.get_template(
+        f'email_confirmation.{language.lower()}.txt'
+    )
+    text = template.render(params)
+    template = templates.get_template(
+        f'email_confirmation.{language.lower()}.html'
+    )
+    html = template.render(params)
     message = MessageSchema(
         subject=subject,
-        recipients=[
-            email,
-        ],
-        html=template.render(params),
+        recipients=[email],
+        body=text,
+        html=html,
     )
     background_tasks.add_task(mailer.send_message, message)
     return

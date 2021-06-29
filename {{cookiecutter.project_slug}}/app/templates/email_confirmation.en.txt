@@ -1,0 +1,17 @@
+{% raw %}
+Email Address Confirmation
+--------------------------
+
+Hey{% if name %} {{name}}{% endif %}!
+
+We are almost there. To continue your registration, we need you to confirm that your email address is {{email}}. Just click the link below:
+
+
+{{ register_user_link }}
+
+
+This link is valid for just *1 hour*. After that, you'll have to ask for a new one.
+
+— The {{ app_name }} Team
+{% endraw %}
+

@@ -240,8 +240,8 @@
                               <div class="v-text-align"
                                 style="color: #10b682; line-height: 140%; text-align: left; word-wrap: break-word;">
                                 <p style="font-size: 14px; line-height: 140%;"><span
-                                    style="font-family: helvetica, sans-serif; font-size: 30px; line-height: 42px; font-weight: 600">Reset
-                                    Password</span></p>
+                                    style="font-family: helvetica, sans-serif; font-size: 30px; line-height: 42px; font-weight: 600">
+                                    Confirmação de Endereço de Email</span></p>
                               </div>
 
                             </td>
@@ -260,8 +260,8 @@
                               <div class="v-text-align"
                                 style="color: #666666; line-height: 140%; text-align: left; word-wrap: break-word;">
                                 <p style="font-size: 14px; line-height: 140%;"><span
-                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 22.4px;">Hi,
-                                    {{ name }}</span></p>
+                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 22.4px;">Olá{%
+                                    if name %} {{name}}{% endif %}!</span></p>
                               </div>
 
                             </td>
@@ -280,18 +280,13 @@
                               <div class="v-text-align"
                                 style="color: #666666; line-height: 170%; text-align: left; word-wrap: break-word;">
                                 <p style="font-size: 14px; line-height: 170%;"><span
-                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">We've
-                                    received a request to reset the password for the
-                                    account associated with
-                                    <code>{{ email }}</code>. No changes have been
-                                    made to your account
-                                    yet. So, if you did not perform this request,
-                                    you can
-                                    safely ignore this email.</span></p>
+                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">Estamos
+                                    quase lá. Para continuar seu registro, precisamos que você confirme se seu endereço
+                                    de e-mail é <code>{{email}}</code>.</span></p>
                                 <br>
                                 <p style="font-size: 14px; line-height: 170%;"><span
-                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">You
-                                    can reset your password by clicking the button below:</span></p>
+                                    style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">Basta
+                                    clicar no link abaixo:</span></p>
                               </div>
 
                             </td>
@@ -337,9 +332,9 @@
 
                               <div class="v-text-align" align="left">
                                 <!--[if mso]><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing: 0; border-collapse: collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;font-family:arial,helvetica,sans-serif;"><tr><td class="v-text-align" style="font-family:arial,helvetica,sans-serif;" align="left"><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="" style="height:45px; v-text-anchor:middle; width:149px;" arcsize="9%" stroke="f" fillcolor="#094c54"><w:anchorlock/><center style="color:#FFFFFF;font-family:arial,helvetica,sans-serif;"><![endif]-->
-                                <a href="{{ reset_password_link }}" target="_blank"
+                                <a href="{{ register_user_link }}" target="_blank"
                                   style="padding: 1rem 2rem; text-transform: uppercase; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);box-sizing: border-box;display: inline-block;font-family:arial,helvetica,sans-serif;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #FFFFFF; background-color: #10b682; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; width:auto; max-width:100%; overflow-wrap: break-word; word-break: break-word; word-wrap:break-word; mso-border-alt: none;">
-                                  Reset Password
+                                  Confirmar Endereço de Email
                                 </a>
                                 <br>
                                 <!--[if mso]></center></v:roundrect></td></tr></table><![endif]-->
@@ -360,19 +355,6 @@
               </div>
             </div>
           </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
           <div class="u-row-container" style="padding: 0px;background-color: transparent">
@@ -412,13 +394,10 @@
                                         style="color: #666666; line-height: 170%; text-align: left; word-wrap: break-word;">
                                         <p style="font-size: 14px; line-height: 170%;">
                                           <span
-                                            style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">
-                                            This link will expire in <b>1
-                                              hour</b>. After that,
-                                            you'll have to ask for a
-                                            new one.</span>
+                                            style="font-family: helvetica, sans-serif; font-size: 16px; line-height: 27.2px;">Este
+                                            link é valido por apenas <b>1 hora</b>. Depois disso, você terá que fazer um
+                                            novo pedido de confirmação de email.</span>
                                         </p>
-
 
                                       </div>
                                     </td>
@@ -444,13 +423,6 @@
 
 
 
-
-
-
-
-
-
-
           <!--[if (mso)|(IE)]></td></tr></table><![endif]-->
         </td>
       </tr>
@@ -458,16 +430,6 @@
   </table>
   <!--[if mso]></div><![endif]-->
   <!--[if IE]></div><![endif]-->
-
-
-
-
-
-
-
-
-
-
 
 
 </body>
