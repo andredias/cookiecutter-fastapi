@@ -87,19 +87,18 @@ async def send_reset_password_instructions(
         subject = f'Reset your {config.APP_NAME} password'
         app_name = config.APP_NAME
 
+    link = (
+        f'{Path(config.APP_URL, "reset_password")}'
+        f'?{urlencode(dict(session_id=session_id))}'
+    )
     params = {
         'name': user.name,
         'app_name': app_name,
         'app_url': config.APP_URL,
         'email': email,
-        'reset_password_link': str(
-            Path(
-                config.APP_URL,
-                'reset_password',
-                urlencode(dict(session_id=session_id)),
-            )
-        ),
+        'reset_password_link': link,
     }
+    logger.debug(params)
     template = templates.get_template(f'reset_password.{language.lower()}.txt')
     text = template.render(params)
     template = templates.get_template(f'reset_password.{language.lower()}.html')
@@ -153,18 +152,17 @@ async def send_register_user_instructions(
         subject = f'Confirm your email address to {config.APP_NAME}'
         app_name = config.APP_NAME
 
+    link = (
+        f'{Path(config.APP_URL, "register_user")}'
+        f'?{urlencode(dict(session_id=session_id))}'
+    )
     params = {
         'app_name': app_name,
         'app_url': config.APP_URL,
         'email': email,
-        'register_user_link': str(
-            Path(
-                config.APP_URL,
-                'register_user',
-                urlencode(dict(session_id=session_id)),
-            )
-        ),
+        'register_user_link': link,
     }
+    logger.debug(params)
     template = templates.get_template(
         f'email_confirmation.{language.lower()}.txt'
     )
