@@ -11,7 +11,9 @@ from ..schemas.user import UserInfo, UserInsert, UserPatch
 router = APIRouter()
 
 
-async def target_user(id: int, current_user: UserInfo) -> UserInfo:
+async def target_user(
+    id: int, current_user: UserInfo = Depends(owner_or_admin)
+) -> UserInfo:
     user = current_user if id == current_user.id else await get_user(id)
     if not user:
         raise HTTPException(404)
@@ -42,11 +44,10 @@ async def update_user(
     id: int,
     patch: UserPatch,
     current_user: UserInfo = Depends(owner_or_admin),
+    user: UserInfo = Depends(target_user),
 ):
     if 'is_admin' in patch.dict(exclude_unset=True) and not current_user.is_admin:
         raise HTTPException(403)
-
-    user = await target_user(id, current_user)
     patch = UserPatch(**diff_models(user, patch))
     try:
         await update(id, patch)
@@ -58,8 +59,7 @@ async def update_user(
 
 @router.delete('/users/{id}', status_code=204)
 @db.transaction()
-async def delete_user(id: int, current_user: UserInfo = Depends(owner_or_admin)):
-    await target_user(id, current_user)
+async def delete_user(id: int, user: UserInfo = Depends(target_user)):
     await delete(id)
     sessions = await redis.keys(f'user:{id}*')
     if sessions:
