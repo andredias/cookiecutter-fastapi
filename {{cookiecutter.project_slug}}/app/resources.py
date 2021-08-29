@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from string import ascii_uppercase
 
@@ -15,18 +16,15 @@ redis = Redis.from_url(config.REDIS_URL)
 
 async def startup():
     setup_logger()
+    await asyncio.gather(_init_redis(), _init_database())
     if config.DEBUG:
         show_config()
-    await _init_redis()
-    await _init_database()
-    if config.DEBUG:
         await populate_dev_db()
     logger.info('started...')
 
 
 async def shutdown():
-    await _stop_database()
-    await _stop_redis()
+    await asyncio.gather(_stop_redis(), _stop_database())
     logger.info('...shutdown')
 
 
@@ -96,7 +94,7 @@ async def _init_database() -> None:
     try:
         await _connect_to_db()
     except RetryError:
-        logger.error('Não foi possível conectar ao banco de dados.')
+        logger.error('Could not connect to the database.')
         raise
     engine = create_engine(config.DATABASE_URL)
     metadata.create_all(engine, checkfirst=True)
