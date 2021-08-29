@@ -1,10 +1,10 @@
-import secrets
+from secrets import randbelow
 from typing import Optional
 
 import orjson as json
 from loguru import logger
 from passlib.context import CryptContext
-from sqlalchemy import BigInteger, Boolean, Column, String, Table, Unicode
+from sqlalchemy import Boolean, Column, Integer, String, Table, Unicode
 
 from .. import config
 from ..resources import db, redis
@@ -12,7 +12,11 @@ from ..schemas.user import UserInfo, UserInsert, UserPatch
 from . import metadata
 
 crypt_ctx = CryptContext(schemes=['argon2'])
-MAX_ID = 2 ** 32
+
+
+def random_id() -> int:
+    MAX_ID = 2 ** 31
+    return randbelow(MAX_ID)
 
 
 User = Table(
@@ -23,7 +27,7 @@ User = Table(
     #    One might guess that admin is always user with ID 1, for example.
     # 2. Tests end up using fixed ID values such as 1 or 2 instead of real values.
     #    This leads to poor test designs that should be avoided.
-    Column('id', BigInteger, primary_key=True, autoincrement=False),
+    Column('id', Integer, primary_key=True, autoincrement=False),
     Column('name', Unicode, nullable=False),
     Column('email', Unicode, nullable=False, unique=True),
     Column('password_hash', String(77), nullable=False),
@@ -78,13 +82,13 @@ async def get_user(id: int) -> Optional[UserInfo]:
 
 async def insert(user: UserInsert) -> int:
     fields = user.dict()
-    fields['id'] = secrets.randbelow(MAX_ID)
+    id_ = fields['id'] = random_id()
     password = fields.pop('password')
     fields['password_hash'] = crypt_ctx.hash(password)
-    query = User.insert().values(fields)
-    logger.debug(query)
-    await db.execute(query)
-    return fields['id']
+    stmt = User.insert().values(fields)
+    logger.debug(stmt)
+    await db.execute(stmt)
+    return id_
 
 
 async def update(id: int, patch: UserPatch) -> None:
@@ -92,14 +96,14 @@ async def update(id: int, patch: UserPatch) -> None:
     if 'password' in fields:
         password = fields.pop('password')
         fields['password_hash'] = crypt_ctx.hash(password)
-    query = User.update().where(User.c.id == id).values(**fields)
-    logger.debug(query)
-    await db.execute(query)
+    stmt = User.update().where(User.c.id == id).values(**fields)
+    logger.debug(stmt)
+    await db.execute(stmt)
     await redis.delete(f'user:{id}')  # invalidate cache
 
 
 async def delete(id: int) -> None:
-    query = User.delete().where(User.c.id == id)
-    logger.debug(query)
-    await db.execute(query)
+    stmt = User.delete().where(User.c.id == id)
+    logger.debug(stmt)
+    await db.execute(stmt)
     await redis.delete(f'user:{id}')
