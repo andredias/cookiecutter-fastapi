@@ -8,7 +8,7 @@ from ..resources import db, redis
 from ..schemas import diff_models
 from ..schemas.user import UserInfo, UserInsert, UserPatch
 
-router = APIRouter()
+router = APIRouter(prefix='/users', tags=['users'])
 
 
 async def target_user(
@@ -20,25 +20,22 @@ async def target_user(
     return user
 
 
-@router.get('/users', response_model=list[UserInfo])
-async def get_users(admin: UserInfo = Depends(admin_user)):
+@router.get('', response_model=list[UserInfo], dependencies=[Depends(admin_user)])
+async def get_users():
     return await get_all()
 
 
-@router.get('/users/me', response_model=UserInfo)
+@router.get('/me', response_model=UserInfo)
 async def get_self_info(user: UserInfo = Depends(authenticated_user)):
     return user
 
 
-@router.get('/users/{id}', response_model=UserInfo)
-async def get_user_info(
-    id: int, current_user: UserInfo = Depends(owner_or_admin)
-):
-    user = await target_user(id, current_user)
+@router.get('/{id}', response_model=UserInfo)
+async def get_user_info(id: int, user: UserInfo = Depends(target_user)):
     return user
 
 
-@router.put('/users/{id}', status_code=204)
+@router.put('/{id}', status_code=204)
 @db.transaction()
 async def update_user(
     id: int,
@@ -57,18 +54,23 @@ async def update_user(
     return
 
 
-@router.delete('/users/{id}', status_code=204)
+@router.delete('/{id}', status_code=204, dependencies=[Depends(target_user)])
 @db.transaction()
-async def delete_user(id: int, user: UserInfo = Depends(target_user)):
+async def delete_user(id: int):
     await delete(id)
     sessions = await redis.keys(f'user:{id}*')
     if sessions:
         await redis.delete(*sessions)
 
 
-@router.post('/users', status_code=201, response_model=UserInfo)
+@router.post(
+    '',
+    status_code=201,
+    response_model=UserInfo,
+    dependencies=[Depends(admin_user)],
+)
 @db.transaction()
-async def create_user(user: UserInsert, admin: UserInfo = Depends(admin_user)):
+async def create_user(user: UserInsert):
     try:
         id = await insert(user)
     except IntegrityConstraintViolationError:
