@@ -8,23 +8,34 @@ from loguru import logger
 from tenacity import RetryError, retry, stop_after_delay, wait_exponential
 
 from . import config
-from .utils import populate_dev_db
 
 db = Database(config.DATABASE_URL, force_rollback=config.TESTING)
 redis = Redis.from_url(config.REDIS_URL)
+test_initialized = False
 
 
 async def startup():
+    from .database_utils import create_db, populate_dev_db
+
+    global test_initialized
+
     setup_logger()
-    await asyncio.gather(_init_redis(), _init_database())
-    if config.DEBUG:
+    if not test_initialized:  # show the configuration only once
         show_config()
-        await populate_dev_db()
+    await asyncio.gather(connect_redis(), connect_database())
+    if not test_initialized:  # prevents tests to initialize it several times
+        test_initialized = True
+        if config.DEBUG or config.TESTING:
+            create_db()
+            await populate_dev_db()
+        # TODO: add migration
+        # else:  # staging or production
+        #     migrate_db()
     logger.info('started...')
 
 
 async def shutdown():
-    await asyncio.gather(_stop_redis(), _stop_database())
+    await asyncio.gather(disconnect_redis(), disconnect_database())
     logger.info('...shutdown')
 
 
@@ -32,7 +43,7 @@ def setup_logger():
     """
     Configure Loguru's logger
     """
-    _intercept_standard_logging_messages()
+    # _intercept_standard_logging_messages()
     logger.remove()  # remove standard handler
     logger.add(
         sys.stderr,
@@ -81,30 +92,24 @@ def show_config() -> None:
     return
 
 
-async def _init_database() -> None:
-    from sqlalchemy import create_engine
-
-    from .models import metadata
-
+async def connect_database(database: Database = db) -> None:
     @retry(stop=stop_after_delay(3), wait=wait_exponential(multiplier=0.2))
     async def _connect_to_db() -> None:
-        logger.debug('Connecting to database...')
-        await db.connect()
+        logger.debug('Connecting to the database...')
+        await database.connect()
 
     try:
         await _connect_to_db()
     except RetryError:
         logger.error('Could not connect to the database.')
         raise
-    engine = create_engine(config.DATABASE_URL)
-    metadata.create_all(engine, checkfirst=True)
 
 
-async def _stop_database() -> None:
+async def disconnect_database() -> None:
     await db.disconnect()
 
 
-async def _init_redis():
+async def connect_redis():
 
     # test redis connection
     @retry(stop=stop_after_delay(3), wait=wait_exponential(multiplier=0.2))
@@ -113,10 +118,14 @@ async def _init_redis():
         await redis.set('test_connection', '1234')
         await redis.delete('test_connection')
 
-    await _connect_to_redis()
+    try:
+        await _connect_to_redis()
+    except RetryError:
+        logger.error('Could not connect to Redis')
+        raise
     return
 
 
-async def _stop_redis():
+async def disconnect_redis():
     if config.TESTING:
         await redis.flushdb()
