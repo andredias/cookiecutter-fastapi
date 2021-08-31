@@ -17,7 +17,7 @@ origins = [
 ]
 
 app = FastAPI(
-    title='Resume Builder',
+    title='{{cookiecutter.project_name}}',
     debug=config.DEBUG,
     default_response_class=ORJSONResponse,
 )
