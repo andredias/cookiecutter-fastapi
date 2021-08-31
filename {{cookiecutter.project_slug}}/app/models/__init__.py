@@ -1,9 +1,11 @@
+from secrets import randbelow
+
 from sqlalchemy import MetaData
 
 metadata = MetaData()
 
-from . import user  # noqa: E402
+MAX_ID = 2 ** 31
 
-__all__ = [
-    'user',
-]
+
+def random_id() -> int:
+    return randbelow(MAX_ID)

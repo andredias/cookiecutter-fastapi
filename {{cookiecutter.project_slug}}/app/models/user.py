@@ -1,4 +1,3 @@
-from secrets import randbelow
 from typing import Optional
 
 import orjson as json
@@ -9,14 +8,9 @@ from sqlalchemy import Boolean, Column, Integer, String, Table, Unicode
 from .. import config
 from ..resources import db, redis
 from ..schemas.user import UserInfo, UserInsert, UserPatch
-from . import metadata
+from . import metadata, random_id
 
 crypt_ctx = CryptContext(schemes=['argon2'])
-
-
-def random_id() -> int:
-    MAX_ID = 2 ** 31
-    return randbelow(MAX_ID)
 
 
 User = Table(
