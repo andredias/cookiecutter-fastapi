@@ -27,7 +27,7 @@ format_code:
 test_only:
 	@ docker-compose --env-file .env.testing up -d; \
 	export $$(grep -v '^#.*' .env.testing | xargs); \
-	pytest -svx --cov-report term-missing --cov-report html --cov-branch \
+	pytest --cov-report term-missing --cov-report html --cov-branch \
 			--cov app/; \
 	docker-compose down
 
