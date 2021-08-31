@@ -329,7 +329,7 @@ test = ["pytest (>=6.2.4,<7.0.0)", "pytest-cov (>=2.12.0,<3.0.0)", "pytest-async
 
 [[package]]
 name = "fastapi-mail"
-version = "0.4.1"
+version = "0.3.7"
 description = "Simple lightwigh mail sending for FastApi"
 category = "main"
 optional = false
@@ -1034,7 +1034,7 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "68740766950543ee427e1eba90c55c1c7be918c80597aa96108fb8e08d6e4ec8"
+content-hash = "eba7ffd4035f39f6f73f9b55728903763f47260467cb4500d3513b134022ac3f"
 
 [metadata.files]
 aioredis = [
@@ -1252,8 +1252,8 @@ fastapi = [
     {file = "fastapi-0.68.1.tar.gz", hash = "sha256:644bb815bae326575c4b2842469fb83053a4b974b82fa792ff9283d17fbbd99d"},
 ]
 fastapi-mail = [
-    {file = "fastapi-mail-0.4.1.tar.gz", hash = "sha256:9b774b64672fb47a6ceb67e45db5bd031694f8b19d15db8597d1c390122e3031"},
-    {file = "fastapi_mail-0.4.1-py3-none-any.whl", hash = "sha256:46ea8d622bf0a1fe7563249706f6600017a28a43a22809ba96e7129b1e0fc31d"},
+    {file = "fastapi-mail-0.3.7.tar.gz", hash = "sha256:639d18b9ca8477bab4a8c20fdf2d01672a12761cb2d08dac4a87154cd581e9f6"},
+    {file = "fastapi_mail-0.3.7-py3-none-any.whl", hash = "sha256:979eda1f518f2524d6a9ddd4b32b6c4690b56310de89034e7e4832f36a3d4acd"},
 ]
 flake8 = [
     {file = "flake8-3.9.2-py2.py3-none-any.whl", hash = "sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907"},

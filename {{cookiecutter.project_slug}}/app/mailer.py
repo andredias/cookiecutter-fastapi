@@ -5,6 +5,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from . import config
 
+templates_path = Path(__file__).parent / 'templates'
 conf = ConnectionConfig(
     MAIL_USERNAME=config.MAIL_USERNAME,
     MAIL_PASSWORD=config.MAIL_PASSWORD,
@@ -17,11 +18,9 @@ conf = ConnectionConfig(
     USE_CREDENTIALS=True,
     MAIL_DEBUG=config.DEBUG,
     SUPPRESS_SEND=config.DEBUG or config.TESTING,
-    TEMPLATE_FOLDER=Path(__file__).parent / 'templates',
+    TEMPLATE_FOLDER=templates_path,
 )
 
 mailer = FastMail(conf)
-
-templates_path = Path(__file__).parent / 'templates'
 loader = FileSystemLoader(templates_path)
 templates = Environment(loader=loader, autoescape=True)
