@@ -12,6 +12,7 @@ DEBUG = ENV != 'production'
 TESTING = ENV == 'testing'
 
 LOG_LEVEL = os.getenv('LOG_LEVEL') or DEBUG and 'DEBUG' or 'INFO'
+os.environ['LOGURU_DEBUG_COLOR'] = '<fg #777>'
 
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'development_1234')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
