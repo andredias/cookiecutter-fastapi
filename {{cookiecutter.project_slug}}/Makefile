@@ -32,6 +32,13 @@ test_only:
 	docker-compose down
 
 
+test_debug:
+	@ docker-compose --env-file .env.testing up -d; \
+	export $$(grep -v '^#.*' .env.testing | xargs); \
+	pytest -svx --default-async-timeout=3600; \
+	docker-compose down
+
+
 test: lint test_only
 
 
