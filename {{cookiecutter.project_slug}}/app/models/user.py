@@ -67,9 +67,7 @@ async def get_user(id: int) -> Optional[UserInfo]:
     result = await db.fetch_one(query)
     if result:
         user = UserInfo(**result)
-        # update Redis with the record
-        await redis.set(user_id, user.json())
-        await redis.expire(user_id, config.SESSION_LIFETIME)
+        await redis.set(user_id, user.json(), ex=config.SESSION_LIFETIME)
         return user
     return None
 
