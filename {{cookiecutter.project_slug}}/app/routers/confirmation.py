@@ -1,6 +1,7 @@
 from pathlib import Path
 from urllib.parse import urlencode
 
+from asyncpg.exceptions import IntegrityConstraintViolationError
 from email_validator import EmailNotValidError, validate_email
 from fastapi import (
     APIRouter,
@@ -22,6 +23,7 @@ from ..models.user import (
     UserPatch,
     db,
     get_user_by_email,
+    insert,
     update,
 )
 from ..schemas.user import check_password
@@ -31,7 +33,6 @@ from ..sessions import (
     get_session_payload,
     session_exists,
 )
-from .user import create_user
 
 router = APIRouter()
 
@@ -182,6 +183,7 @@ async def send_register_user_instructions(
 
 
 @router.post('/register_user', response_model=UserInfo, status_code=201)
+@db.transaction()
 async def register_user(
     user: UserInsert,
     session_id: str = Body(...),
@@ -190,4 +192,9 @@ async def register_user(
     if user.email != email:
         raise HTTPException(422)
     await delete_session(session_id)
-    return await create_user(user)
+    try:
+        id = await insert(user)
+    except IntegrityConstraintViolationError:
+        logger.info(f'Integrity violation. {user}')
+        raise HTTPException(422)
+    return UserInfo(id=id, **user.dict())

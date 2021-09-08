@@ -3,7 +3,7 @@ from typing import Optional
 import orjson as json
 from loguru import logger
 from passlib.context import CryptContext
-from sqlalchemy import Boolean, Column, Integer, String, Table, Unicode
+from sqlalchemy import Column, Integer, String, Table, Unicode
 
 from .. import config
 from ..resources import db, redis
@@ -25,7 +25,6 @@ User = Table(
     Column('name', Unicode, nullable=False),
     Column('email', Unicode, nullable=False, unique=True),
     Column('password_hash', String(77), nullable=False),
-    Column('is_admin', Boolean, default=False),
 )
 
 

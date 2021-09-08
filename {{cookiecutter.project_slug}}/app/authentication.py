@@ -1,6 +1,6 @@
 import re
 
-from fastapi import Cookie, Depends, Header, HTTPException
+from fastapi import Cookie, Header, HTTPException
 
 from .models.user import get_user
 from .schemas.user import UserInfo
@@ -30,20 +30,3 @@ async def authenticated_user(
     if not user:
         raise HTTPException(status_code=401)
     return user
-
-
-async def admin_user(
-    user: UserInfo = Depends(authenticated_user),
-) -> UserInfo:
-    if not user.is_admin:
-        raise HTTPException(status_code=403)
-    return user
-
-
-async def owner_or_admin(
-    id: int,
-    current_user: UserInfo = Depends(authenticated_user),
-) -> UserInfo:
-    if id == current_user.id or current_user.is_admin:
-        return current_user
-    raise HTTPException(403)

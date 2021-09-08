@@ -1,197 +1,124 @@
 from httpx import AsyncClient
-from loguru import logger
 
-from app.models.user import UserInfo, UserInsert, get_user, insert
-from app.sessions import create_session, session_exists
+from app.models.user import UserInfo, UserInsert, get_user
 
 from ..utils import logged_session
 
 Users = list[UserInfo]
 
 
-async def test_get_users(users: Users, client: AsyncClient) -> None:
-    admin_id = users[0].id
-    user_id = users[1].id
-    url = '/users'
-
-    await logged_session(client, admin_id)
-    resp = await client.get(url)
-    assert resp.status_code == 200
-    assert len(resp.json()) == 2
-
-    await logged_session(client, user_id)
-    resp = await client.get(url)
-    assert resp.status_code == 403
-
-    await logged_session(client)
-    resp = await client.get(url)
-    assert resp.status_code == 401
+async def test_get_users(client: AsyncClient) -> None:
+    resp = await client.get('/users')
+    assert resp.status_code == 405
 
 
 async def test_get_user(users: Users, client: AsyncClient) -> None:
-    admin_id = users[0].id
-    user_id = users[1].id
     url = '/users/{}'
 
-    logger.info('normal user try to access its own info')
-    await logged_session(client, user_id)
-    resp = await client.get(url.format(user_id))
-    assert resp.status_code == 200
-    assert UserInfo(**resp.json()) == users[1]
+    # anonymous access to user account
+    await logged_session(client)
+    resp = await client.get(url.format(users[0].id))
+    assert resp.status_code == 401
 
-    logger.info('normal user try to access another user info')
-    resp = await client.get(url.format(admin_id))
+    # user tries to access his own info
+    await logged_session(client, users[0].id)
+
+    resp = await client.get(url.format(users[0].id))
+    assert resp.status_code == 200
+    assert UserInfo(**resp.json()) == users[0]
+
+    # user tries to access another user info
+    resp = await client.get(url.format(users[1].id))
     assert resp.status_code == 403
 
-    logger.info('admin access to another user info')
-    await logged_session(client, admin_id)
-    resp = await client.get(url.format(user_id))
-    assert resp.status_code == 200
-    assert UserInfo(**resp.json()) == users[1]
-
-    logger.info('admin access to inexistent user')
-    resp = await client.get(url.format(user_id + 1))
-    assert resp.status_code == 404
-
-    logger.info('anonymous access to user account')
-    await logged_session(client)
-    resp = await client.get(url.format(user_id))
-    assert resp.status_code == 401
+    # user tries to access inexistent user info')
+    resp = await client.get(url.format(0))
+    assert resp.status_code == 403
 
 
 async def test_update_user(users: Users, client: AsyncClient) -> None:
-    admin_id = users[0].id
-    user_id = users[1].id
     url = '/users/{}'
-    email = 'beltrano@pronus.io'
+    email = 'fulano@pronus.io'
     name = 'Belafonte'
 
-    logger.info('anonymous tries to update a user account')
-    resp = await client.put(url.format(user_id), json={'email': email})
+    # anonymous tries to update a user account
+    resp = await client.put(url.format(users[0].id), json={'email': email})
     assert resp.status_code == 401
 
-    logger.info('normal user tries to update another account')
-    await logged_session(client, user_id)
-    resp = await client.put(url.format(admin_id), json={'email': email})
+    # log as user 0
+    await logged_session(client, users[0].id)
+
+    # user tries to update another account
+    resp = await client.put(url.format(users[1].id), json={'email': email})
     assert resp.status_code == 403
 
-    logger.info('invalid password')
+    # invalid password that doesn't satisfy the criteria
     resp = await client.put(
-        url.format(user_id),
+        url.format(users[0].id),
         json={'email': email, 'password': 'password123'},
     )
     assert resp.status_code == 422
 
-    logger.info('normal user tries to update his own account')
+    # user tries to update his own account
     resp = await client.put(
-        url.format(user_id),
+        url.format(users[0].id),
         json={'email': email, 'password': 'new password 123!'},
     )
     assert resp.status_code == 204
-    user = await get_user(user_id)
+    user = await get_user(users[0].id)
     assert user and user.email == email
 
-    logger.info('normal user tries to update with an existing email')
-    resp = await client.put(url.format(user_id), json={'email': users[0].email})
+    # user tries to update his record using an existing email
+    resp = await client.put(
+        url.format(users[0].id), json={'email': users[1].email}
+    )
     assert resp.status_code == 422
 
-    logger.info('normal user tries to become admin')
-    resp = await client.put(url.format(user_id), json={'is_admin': True})
+    # user tries to update inexistent user
+    resp = await client.put(url.format(0), json={'name': name})
     assert resp.status_code == 403
-
-    logger.info('admin updates a user')
-    await logged_session(client, admin_id)
-    resp = await client.put(
-        url.format(user_id), json={'name': name, 'is_admin': True}
-    )
-    assert resp.status_code == 204
-    user = await get_user(user_id)
-    assert user and user.name == name and user.is_admin is True
-
-    logger.info('admin tries to update inexistent user')
-    resp = await client.put(url.format(user_id + 1), json={'name': name})
-    assert resp.status_code == 404
 
 
 async def test_delete_user(users: Users, client: AsyncClient) -> None:
-    admin_id = users[0].id
-    user_id = users[1].id
-    third_id = await insert(
-        UserInsert(
-            name='Sicrano',
-            email='sicrano@email.com',
-            password='Sicrano Tralalá',
-        )
-    )
     url = '/users/{}'
 
-    logger.info('anonymous tries to delete a user account')
-    resp = await client.delete(url.format(user_id))
+    # anonymous tries to delete a user account
+    resp = await client.delete(url.format(users[0].id))
     assert resp.status_code == 401
 
-    logger.info('sicrano tries to delete another account')
-    await logged_session(client, third_id)
-    resp = await client.delete(url.format(admin_id))
+    await logged_session(client, users[0].id)
+
+    # user tries to delete another account
+    resp = await client.delete(url.format(users[1].id))
     assert resp.status_code == 403
 
-    logger.info('sicrano tries to delete his own account')
-    resp = await client.delete(url.format(third_id))
+    # user tries to delete inexistent account
+    resp = await client.delete(url.format(0))
+    assert resp.status_code == 403
+
+    # user tries to delete his own account
+    resp = await client.delete(url.format(users[0].id))
     assert resp.status_code == 204
-    assert await get_user(third_id) is None
-
-    logger.info('admin deletes a user')
-    session_id = await create_session(f'user:{user_id}')
-    assert await session_exists(session_id)
-    await logged_session(client, admin_id)
-    resp = await client.delete(url.format(user_id))
-    assert resp.status_code == 204
-    assert not await session_exists(session_id)
-
-    logger.info('admin tries to delete inexistent user')
-    resp = await client.delete(url.format(user_id + 1))
-    assert resp.status_code == 404
+    assert await get_user(users[0].id) is None
 
 
-async def test_create_user(users: Users, client: AsyncClient) -> None:
+async def test_create_user(client: AsyncClient) -> None:
     from faker import Faker
 
     fake = Faker()
     Faker.seed(0)
-
-    def fake_user() -> UserInsert:
-        return UserInsert(
-            name=fake.name(),
-            email=fake.email(),
-            password=fake.password(20),
-            is_admin=fake.boolean(),
-        )
-
-    admin_id = users[0].id
-    user_id = users[1].id
-
-    logger.info('anonymous tries to create a user account')
-    user = fake_user()
+    user = UserInsert(
+        name=fake.name(),
+        email=fake.email(),
+        password=fake.password(20),
+        is_admin=fake.boolean(),
+    )
     resp = await client.post('/users', content=user.json())
-    assert resp.status_code == 401
-
-    logger.info('user tries to create another account')
-    user = fake_user()
-    await logged_session(client, user_id)
-    resp = await client.post('/users', content=user.json())
-    assert resp.status_code == 403
-
-    logger.info('admin tries to create another account')
-    await logged_session(client, admin_id)
-    user = fake_user()
-    user.is_admin = True
-    resp = await client.post('/users', content=user.json())
-    assert resp.status_code == 201
-    assert resp.json()
+    assert resp.status_code == 405
 
 
 async def test_get_me(users: Users, client: AsyncClient):
-    user_id = users[1].id
-    await logged_session(client, user_id)
+    await logged_session(client, users[0].id)
     resp = await client.get('/users/me')
     assert resp.status_code == 200
-    assert UserInfo(**resp.json()) == users[1]
+    assert UserInfo(**resp.json()) == users[0]

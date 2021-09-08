@@ -36,13 +36,11 @@ async def populate_users() -> None:
             name='Fulano de Tal',
             email='fulano@email.com',
             password='Paulo Paulada Power',
-            is_admin=True,
         ),
         UserInsert(
             name='Beltrano de Tal',
             email='beltrano@email.com',
             password='abcdefgh1234567890',
-            is_admin=False,
         ),
     ]
 

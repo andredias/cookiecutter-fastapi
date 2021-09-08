@@ -22,7 +22,6 @@ def test_user_model(user_schema):
             name='abcdef',
             email='invalid.email.com',
             password='valid password!!!',
-            is_admin=True,
         )
 
     with raises(ValueError):

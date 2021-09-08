@@ -21,14 +21,12 @@ class UserInfo(BaseModel):
     id: int
     name: str
     email: EmailStr
-    is_admin: bool = False
 
 
 class UserInsert(BaseModel):
     name: str
     email: EmailStr
     password: str
-    is_admin: bool = False
 
     _password = validator('password', allow_reuse=True)(check_password)
 
@@ -37,6 +35,5 @@ class UserPatch(BaseModel):
     name: Optional[str]
     email: Optional[EmailStr]
     password: Optional[str]
-    is_admin: Optional[bool] = False
 
     _password = validator('password', allow_reuse=True)(check_password)
