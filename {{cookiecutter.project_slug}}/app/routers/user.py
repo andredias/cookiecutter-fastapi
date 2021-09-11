@@ -4,7 +4,7 @@ from loguru import logger
 
 from ..authentication import authenticated_user
 from ..models.user import delete, update
-from ..resources import db, redis
+from ..resources import redis
 from ..schemas import diff_models
 from ..schemas.user import UserInfo, UserPatch
 
@@ -36,7 +36,6 @@ async def get_user_info(id: int, user: UserInfo = Depends(self_user)):
 
 
 @router.put('/{id}', status_code=204)
-@db.transaction()
 async def update_user(
     id: int,
     patch: UserPatch,
@@ -52,7 +51,6 @@ async def update_user(
 
 
 @router.delete('/{id}', status_code=204, dependencies=[Depends(self_user)])
-@db.transaction()
 async def delete_user(id: int):
     await delete(id)
     sessions = await redis.keys(f'user:{id}*')

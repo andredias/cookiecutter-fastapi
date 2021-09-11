@@ -1,6 +1,3 @@
-from unittest.mock import patch
-
-from databases import Database
 from loguru import logger
 from sqlalchemy import create_engine
 
@@ -22,10 +19,7 @@ async def populate_dev_db():
         return
 
     logger.debug('Populating DEV/TEST database')
-    async with Database(config.DATABASE_URL) as db:
-        async with db.transaction():
-            with patch('app.models.user.db', db):
-                await populate_users()
+    await populate_users()
 
 
 async def populate_users() -> None:

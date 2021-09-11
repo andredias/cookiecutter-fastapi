@@ -21,7 +21,6 @@ from ..models.user import (
     UserInfo,
     UserInsert,
     UserPatch,
-    db,
     get_user_by_email,
     insert,
     update,
@@ -115,7 +114,6 @@ async def send_reset_password_instructions(
 
 
 @router.post('/reset_password')
-@db.transaction()
 async def reset_password(
     session_id: str = Body(...),
     email: EmailStr = Depends(confirm_email_session),
@@ -183,7 +181,6 @@ async def send_register_user_instructions(
 
 
 @router.post('/register_user', response_model=UserInfo, status_code=201)
-@db.transaction()
 async def register_user(
     user: UserInsert,
     session_id: str = Body(...),

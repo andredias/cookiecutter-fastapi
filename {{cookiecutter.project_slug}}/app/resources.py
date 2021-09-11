@@ -9,7 +9,7 @@ from tenacity import RetryError, retry, stop_after_delay, wait_exponential
 
 from . import config
 
-db = Database(config.DATABASE_URL, force_rollback=config.TESTING)
+db = Database(config.DATABASE_URL)
 redis = Redis.from_url(config.REDIS_URL)
 test_initialized = False
 
@@ -43,7 +43,7 @@ def setup_logger():
     """
     Configure Loguru's logger
     """
-    # _intercept_standard_logging_messages()
+    _intercept_standard_logging_messages()
     logger.remove()  # remove standard handler
     logger.add(
         sys.stderr,

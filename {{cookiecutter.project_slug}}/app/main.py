@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from . import config
+from .middlewares import dispatch
 from .resources import shutdown, startup
 from .routers import confirmation, login, user
 
@@ -30,6 +32,8 @@ app.add_middleware(
     allow_headers=['*'],
     expose_headers=['x-csrf-token'],
 )
+
+app.add_middleware(BaseHTTPMiddleware, dispatch=dispatch)
 
 for router in routers:
     app.include_router(router)
