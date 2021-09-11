@@ -49,3 +49,6 @@ line_length = 82
 
 [tool.blue]
 line-length = 82
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]

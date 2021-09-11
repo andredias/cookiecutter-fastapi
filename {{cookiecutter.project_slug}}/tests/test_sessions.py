@@ -1,8 +1,6 @@
 import json
-from unittest.mock import AsyncMock, patch
 
 from loguru import logger
-from pytest import mark
 
 from app.sessions import (
     create_csrf,
@@ -38,15 +36,6 @@ async def test_create_csrf(app) -> None:
     session_id = await create_session('user:12345')
     csrf = create_csrf(session_id)
     assert is_valid_csrf(session_id, csrf)
-
-
-@mark.skip('no way to renew session for now')
-@patch('app.sessions.redis', new_callable=AsyncMock)
-async def test_renew_session(redis: AsyncMock, app) -> None:
-    session_id = await create_session('user:1')
-    redis.get.return_value = '{"user_id": 1}'
-    _ = await get_session_payload(session_id)
-    assert redis.expire.call_count == 1
 
 
 async def test_session_keys(app):
