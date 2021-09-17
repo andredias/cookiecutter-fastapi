@@ -15,7 +15,7 @@ routers = [
 ]
 
 origins = [
-    'http://localhost:8080',
+    '*',
 ]
 
 app = FastAPI(
