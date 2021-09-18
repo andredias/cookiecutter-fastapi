@@ -15,13 +15,15 @@ from pytest import fixture
 
 from app.main import app as _app
 from app.models.user import get_all as get_all_users
+from app.resources import db
 from app.schemas.user import UserInfo
 
 
 @fixture
 async def app() -> AsyncIterable[FastAPI]:
     async with LifespanManager(_app):
-        yield _app
+        async with db.transaction(force_rollback=True):  # global rollback
+            yield _app
 
 
 @fixture
