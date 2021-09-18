@@ -1,6 +1,6 @@
 from httpx import AsyncClient, Cookies, Headers
 
-from app.sessions import create_csrf, create_session  # isort:skip
+from app.sessions import create_csrf, create_session
 
 
 async def logged_session(client: AsyncClient, user_id: int = None) -> None:

@@ -11,31 +11,17 @@ from . import config
 
 db = Database(config.DATABASE_URL)
 redis = Redis.from_url(config.REDIS_URL)
-test_initialized = False
 
 
 async def startup():
-    from .database_utils import create_db, populate_dev_db
-
-    global test_initialized
-
     setup_logger()
-    if not test_initialized:  # show the configuration only once
-        show_config()
+    show_config()
     await asyncio.gather(connect_redis(), connect_database())
-    if not test_initialized:  # prevents tests to initialize it several times
-        test_initialized = True
-        if config.DEBUG or config.TESTING:
-            create_db()
-            await populate_dev_db()
-        # TODO: add migration
-        # else:  # staging or production
-        #     migrate_db()
     logger.info('started...')
 
 
 async def shutdown():
-    await asyncio.gather(disconnect_redis(), disconnect_database())
+    await db.disconnect()
     logger.info('...shutdown')
 
 
@@ -83,13 +69,22 @@ def _intercept_standard_logging_messages():
 
 
 def show_config() -> None:
-    values = {
-        v: getattr(config, v)
-        for v in sorted(dir(config))
-        if v[0] in ascii_uppercase
+    config_vars = {
+        key: getattr(config, key)
+        for key in sorted(dir(config))
+        if key[0] in ascii_uppercase
     }
-    logger.debug(values)
+    logger.debug(config_vars)
     return
+
+
+def create_db():
+    from sqlalchemy import create_engine
+
+    from .models import metadata
+
+    engine = create_engine(config.DATABASE_URL, echo=config.TESTING)
+    metadata.create_all(engine, checkfirst=True)
 
 
 async def connect_database(database: Database = db) -> None:
@@ -100,13 +95,11 @@ async def connect_database(database: Database = db) -> None:
 
     try:
         await _connect_to_db()
+        create_db()
+        # migrate_db()
     except RetryError:
         logger.error('Could not connect to the database.')
         raise
-
-
-async def disconnect_database() -> None:
-    await db.disconnect()
 
 
 async def connect_redis():
@@ -124,8 +117,3 @@ async def connect_redis():
         logger.error('Could not connect to Redis')
         raise
     return
-
-
-async def disconnect_redis():
-    if config.TESTING:
-        await redis.flushdb()

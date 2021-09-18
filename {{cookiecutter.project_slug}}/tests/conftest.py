@@ -18,12 +18,42 @@ from app.models.user import get_all as get_all_users
 from app.resources import db
 from app.schemas.user import UserInfo
 
+from .populate_database import populate_db
+
+
+@fixture(scope='session')
+async def basic_app() -> AsyncIterable[FastAPI]:
+    """
+    Lifespan, showing config and populate test database
+    are once-time events.
+    """
+    async with LifespanManager(_app):
+        await populate_db()
+        yield _app
+
 
 @fixture
-async def app() -> AsyncIterable[FastAPI]:
-    async with LifespanManager(_app):
-        async with db.transaction(force_rollback=True):  # global rollback
-            yield _app
+async def redis(basic_app):
+    """
+    Empty redis after each test
+    """
+
+    from app.resources import redis as _redis
+
+    try:
+        yield
+    finally:
+        await _redis.flushdb()
+
+
+@fixture
+async def app(basic_app, redis) -> AsyncIterable[FastAPI]:
+    """
+    Global transaction that wraps all others and roll back all changes after
+    each test.
+    """
+    async with db.transaction(force_rollback=True):  # global rollback
+        yield basic_app
 
 
 @fixture

@@ -1,17 +1,8 @@
 from loguru import logger
-from sqlalchemy import create_engine
-
-from . import config
-from .models import metadata
 
 
-def create_db():
-    engine = create_engine(config.DATABASE_URL, echo=config.DEBUG)
-    metadata.create_all(engine, checkfirst=True)
-
-
-async def populate_dev_db():
-    from .models.user import get_all
+async def populate_db():
+    from app.models.user import get_all
 
     records = await get_all()
     if records:
@@ -23,7 +14,7 @@ async def populate_dev_db():
 
 
 async def populate_users() -> None:
-    from .models.user import UserInsert, insert
+    from app.models.user import UserInsert, insert
 
     users = [
         UserInsert(
