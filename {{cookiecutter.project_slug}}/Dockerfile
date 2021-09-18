@@ -11,15 +11,16 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 
 RUN python -m venv /venv
-ENV PATH=/venv/bin:/root/.poetry/bin:${PATH}
+ENV PATH=/venv/bin:/root/.local/bin:${PATH}
 RUN pip install --upgrade pip
 
 WORKDIR /{{cookiecutter.project_slug}}
 COPY pyproject.toml poetry.lock ./
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-dev
+RUN . /venv/bin/activate; \
+    poetry install --no-dev
 
 # ---------------------------------------------------------
 
@@ -29,7 +30,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends libpq-dev
 
 COPY --from=builder /venv /venv
-ENV PATH=/venv/bin:/venv/rust/bin:${PATH}
+ENV PATH=/venv/bin:${PATH}
 
 WORKDIR /{{cookiecutter.project_slug}}
 USER nobody
