@@ -1,4 +1,4 @@
-{% raw %}
+{% raw -%}
 Confirmação de Endereço de E-mail
 ---------------------------------
 
@@ -14,4 +14,3 @@ Este link é valido por apenas *1 hora*. Depois disso, você terá que fazer um 
 
 — A equipe do {{app_name}}
 {% endraw %}
-
