@@ -19,7 +19,7 @@ Hypercorn = "*"
 loguru = "*"
 orjson = "*"
 passlib = { extras = ["argon2"], version = "*" }
-python = "^3.9"
+python = "^{{cookiecutter.python_version}}"
 uvloop = "*"
 tenacity = "*"
 psycopg2 = "*"
