@@ -1,0 +1,40 @@
+name: Continuous Integration
+
+on: [push]
+
+jobs:
+
+    cookiecutter:
+        runs-on: ubuntu-latest
+        steps:
+
+            - name: Set up python
+                uses: actions/setup-python@v2
+                with:
+                    python-version: 3.x
+
+            - name: Check out repository
+              uses: actions/checkout@v2
+
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+              with:
+                  virtualenvs-in-project: true
+
+            - name: Install cookiecutter
+              run: pip install cookiecutter
+
+            - name: Create project using cookiecutter
+              run: cookiecutter --no-input -o /tmp .
+
+            - name: Lint and Test
+              working-dir: /tmp/projeto
+              run: poetry run make lint
+
+            - name: Test
+              working-dir: /tmp/projeto
+              run: poetry run make test
+
+            - name: Build Docker Image
+              working-dir: /tmp/projeto
+              run: poetry run make build
