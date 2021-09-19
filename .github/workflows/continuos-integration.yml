@@ -28,13 +28,13 @@ jobs:
               run: cookiecutter --no-input -o /tmp .
 
             - name: Lint and Test
-              working-dir: /tmp/projeto
+              working-directory: /tmp/projeto
               run: poetry run make lint
 
             - name: Test
-              working-dir: /tmp/projeto
+              working-directory: /tmp/projeto
               run: poetry run make test
 
             - name: Build Docker Image
-              working-dir: /tmp/projeto
+              working-directory: /tmp/projeto
               run: poetry run make build
