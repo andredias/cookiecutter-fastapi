@@ -21,11 +21,10 @@ async def test_dbtransactionwrappermiddleware(
     async def dbtransactionwrappermiddleware():
         try:
             await delete(users[1].id)
-            # force id duplication for user
-            with patch('app.models.user.random_id', return_value=users[0].id):
-                await insert(
-                    UserInsert(password='abcdefgh1234!.=>', **users[0].dict())
-                )
+            # should raise an exception due to email duplication
+            await insert(
+                UserInsert(password='abcdefgh1234!.=>', **users[0].dict())
+            )
         except UniqueViolationError:
             pass  # leaves the transaction in a inconsistent state
         raise HTTPException(422)
