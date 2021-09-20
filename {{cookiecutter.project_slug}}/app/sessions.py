@@ -30,7 +30,7 @@ async def delete_session(*args) -> None:
 
 
 async def session_keys(pattern: str) -> list[str]:
-    "Returns a list of keys matching ``pattern``"
+    """Returns a list of keys matching ``pattern``"""
     return await redis.keys(pattern)
 
 

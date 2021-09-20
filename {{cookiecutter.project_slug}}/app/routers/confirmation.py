@@ -2,7 +2,6 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from asyncpg.exceptions import IntegrityConstraintViolationError
-from email_validator import EmailNotValidError, validate_email
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -26,32 +25,15 @@ from ..models.user import (
     update,
 )
 from ..schemas.user import check_password
-from ..sessions import (
-    create_session,
-    delete_session,
-    get_session_payload,
-    session_exists,
-)
+from ..sessions import create_session, delete_session, session_exists
 
 router = APIRouter()
 
 
-def valid_email(email: str) -> bool:
-    try:
-        validate_email(email)
-        return True
-    except EmailNotValidError:
-        return False
-
-
-async def confirm_email_session(session_id: str = Body(...)) -> str:
-    try:
-        email, _ = session_id.split(':')
-    except ValueError:
-        raise HTTPException(422)
-    if not (valid_email(email) and await session_exists(session_id)):
+async def existing_session(session_id: str = Body(...)) -> str:
+    if not await session_exists(session_id):
         raise HTTPException(404)
-    return email
+    return session_id
 
 
 def validate_password(password: str = Body(...)) -> str:
@@ -79,21 +61,18 @@ async def send_reset_password_instructions(
     if await session_exists(f'{email}:*'):
         raise HTTPException(429)
 
-    session_id = await create_session(email, str(user.id), lifetime=3600)
+    session_id = await create_session(email, lifetime=3600)
     if language == 'pt-BR':
         subject = f'Redefina a senha para {config.APP_NAME}'
-        app_name = config.APP_NAME
     else:
         subject = f'Reset your {config.APP_NAME} password'
-        app_name = config.APP_NAME
-
     link = (
         f'{Path(config.APP_URL, "reset_password")}'
         f'?{urlencode(dict(session_id=session_id))}'
     )
     params = {
         'name': user.name,
-        'app_name': app_name,
+        'app_name': config.APP_NAME,
         'app_url': config.APP_URL,
         'email': email,
         'reset_password_link': link,
@@ -115,16 +94,15 @@ async def send_reset_password_instructions(
 
 @router.post('/reset_password')
 async def reset_password(
-    session_id: str = Body(...),
-    email: EmailStr = Depends(confirm_email_session),
+    session_id: str = Depends(existing_session),
     password: str = Depends(validate_password),
 ):
-    payload = await get_session_payload(session_id)
-    if not payload:
-        logger.error(f'{session_id} should have a user_id as payload')
-        raise HTTPException(500)
-    user_id = int(payload)
-    await update(user_id, UserPatch(password=password))
+    email = session_id.split(':')[0]
+    user = await get_user_by_email(email)
+    if not user:
+        logger.info(f'User {email} not in the database')
+        raise HTTPException(404)
+    await update(user.id, UserPatch(password=password))
     await delete_session(session_id)
     return
 
@@ -146,17 +124,15 @@ async def send_register_user_instructions(
     session_id = await create_session(email, lifetime=3600)
     if language == 'pt-BR':
         subject = f'Confirme seu endereço de email para {config.APP_NAME}'
-        app_name = config.APP_NAME
     else:
         subject = f'Confirm your email address to {config.APP_NAME}'
-        app_name = config.APP_NAME
 
     link = (
         f'{Path(config.APP_URL, "register_user")}'
         f'?{urlencode(dict(session_id=session_id))}'
     )
     params = {
-        'app_name': app_name,
+        'app_name': config.APP_NAME,
         'app_url': config.APP_URL,
         'email': email,
         'register_user_link': link,
@@ -183,9 +159,9 @@ async def send_register_user_instructions(
 @router.post('/register_user', response_model=UserInfo, status_code=201)
 async def register_user(
     user: UserInsert,
-    session_id: str = Body(...),
-    email: str = Depends(confirm_email_session),
+    session_id: str = Depends(existing_session),
 ):
+    email = session_id.split(':')[0]
     if user.email != email:
         raise HTTPException(422)
     await delete_session(session_id)
