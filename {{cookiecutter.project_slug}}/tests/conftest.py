@@ -22,38 +22,32 @@ from .populate_database import populate_db
 
 
 @fixture(scope='session')
-async def basic_app() -> AsyncIterable[FastAPI]:
+async def populate_test_db() -> None:
     """
-    Lifespan, showing config and populate test database
-    are once-time events.
+    Populate database with test data.
+    """
+    await populate_db()
+
+
+@fixture
+async def app(populate_test_db: None) -> AsyncIterable[FastAPI]:
+    """
+    Create a FastAPI instance.
+
+    1. Populate database with test data only once
+    2. Create a FastAPI instance
+    3. Execute lifespan cycle
+    4. Create a global transaction to wrap each test.
+
+       * DBTransactionMiddleware only wraps each REST API endpoint,
+         but not the test itself.
+       * The global force_rollback provided by Encode/Databases doesn't play well
+         with inner transactions and cause issues.
     """
     async with LifespanManager(_app):
-        await populate_db()
-        yield _app
-
-
-@fixture
-async def redis(basic_app):
-    """
-    Empty redis after each test
-    """
-
-    from app.resources import redis as _redis
-
-    try:
-        yield
-    finally:
-        await _redis.flushdb()
-
-
-@fixture
-async def app(basic_app, redis) -> AsyncIterable[FastAPI]:
-    """
-    Global transaction that wraps all others and roll back all changes after
-    each test.
-    """
-    async with db.transaction(force_rollback=True):  # global rollback
-        yield basic_app
+        async with db.connection() as conn:
+            async with conn.transaction(force_rollback=True):
+                yield _app
 
 
 @fixture

@@ -16,12 +16,12 @@ redis = Redis.from_url(config.REDIS_URL)
 async def startup():
     setup_logger()
     show_config()
-    await asyncio.gather(connect_redis(), connect_database())
+    await asyncio.gather(connect_redis(), start_database())
     logger.info('started...')
 
 
 async def shutdown():
-    await db.disconnect()
+    await asyncio.gather(disconnect_redis(), db.disconnect())
     logger.info('...shutdown')
 
 
@@ -78,6 +78,19 @@ def show_config() -> None:
     return
 
 
+async def connect_database(database: Database) -> None:
+    @retry(stop=stop_after_delay(3), wait=wait_exponential(multiplier=0.2))
+    async def _connect_to_db() -> None:
+        logger.debug('Connecting to the database...')
+        await database.connect()
+
+    try:
+        await _connect_to_db()
+    except RetryError:
+        logger.error('Could not connect to the database.')
+        raise
+
+
 def create_db():
     from sqlalchemy import create_engine
 
@@ -87,19 +100,10 @@ def create_db():
     metadata.create_all(engine, checkfirst=True)
 
 
-async def connect_database(database: Database = db) -> None:
-    @retry(stop=stop_after_delay(3), wait=wait_exponential(multiplier=0.2))
-    async def _connect_to_db() -> None:
-        logger.debug('Connecting to the database...')
-        await database.connect()
-
-    try:
-        await _connect_to_db()
-        create_db()
-        # migrate_db()
-    except RetryError:
-        logger.error('Could not connect to the database.')
-        raise
+async def start_database():
+    await connect_database(db)
+    create_db()
+    # migrate_db()
 
 
 async def connect_redis():
@@ -117,3 +121,8 @@ async def connect_redis():
         logger.error('Could not connect to Redis')
         raise
     return
+
+
+async def disconnect_redis():
+    if config.TESTING:
+        await redis.flushdb()
