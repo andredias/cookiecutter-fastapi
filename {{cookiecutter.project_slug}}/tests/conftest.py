@@ -30,7 +30,17 @@ async def populate_test_db() -> None:
 
 
 @fixture
-async def app(populate_test_db: None) -> AsyncIterable[FastAPI]:
+def connection():
+    """
+    Tries to fix the limitaton of pytest-asyncio and alt-pytest-asyncio
+    in handling contextvars.
+    Not enough though...
+    """
+    return db.connection()
+
+
+@fixture
+async def app(populate_test_db: None, connection) -> AsyncIterable[FastAPI]:
     """
     Create a FastAPI instance.
 
@@ -44,9 +54,10 @@ async def app(populate_test_db: None) -> AsyncIterable[FastAPI]:
        * The global force_rollback provided by Encode/Databases doesn't play well
          with inner transactions and cause issues.
     """
+    assert db.connection() is connection
     async with LifespanManager(_app):
-        async with db.connection() as conn:
-            async with conn.transaction(force_rollback=True):
+        async with connection:
+            async with connection.transaction(force_rollback=True):
                 yield _app
 
 

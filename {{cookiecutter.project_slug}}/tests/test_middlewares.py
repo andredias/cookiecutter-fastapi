@@ -12,7 +12,7 @@ Users = list[UserInfo]
 
 
 async def test_dbtransactionwrappermiddleware(
-    app: FastAPI, client: AsyncClient, users: Users
+    app: FastAPI, client: AsyncClient, users: Users, connection
 ):
     async def dispatch(request, call_next):
         return await call_next(request)
@@ -30,11 +30,11 @@ async def test_dbtransactionwrappermiddleware(
         raise HTTPException(422)
 
     # middleware disabled
-    async with db.transaction(force_rollback=True):
-        with patch('app.middlewares._dispatch', side_effect=dispatch):
-            response = await client.post('/test_db_transaction_wrapper')
-        assert response.status_code == 422
-        with raises(InFailedSQLTransactionError):
+    with raises(InFailedSQLTransactionError):
+        async with db.transaction(force_rollback=True):
+            with patch('app.middlewares._dispatch', side_effect=dispatch):
+                response = await client.post('/test_db_transaction_wrapper')
+            assert response.status_code == 422
             await get_user(users[1].id)
 
     # middleware enabled
